@@ -11,7 +11,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -21,13 +20,12 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import ie.tus.rocksolid.R
 
-
 @Composable
 fun WelcomeScreen(navController: NavHostController) {
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF101010)) // Set black background color
+            .background(Color(0xFFF5F5F5)) // Light grey background to match the image
     ) {
         WelcomeScreenContent(
             onLoginClick = {
@@ -48,87 +46,77 @@ private fun WelcomeScreenContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF101010)) // Dark background
+            .background(Color(0xFFF5F5F5)) // Light grey background
             .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Logo at the top
+        // Welcome Text
+        Text(
+            text = "Welcome to",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        // Logo at the center
         Image(
             painter = painterResource(id = R.drawable.ic_logo),
             contentDescription = "App Logo",
             modifier = Modifier
-                .size(250.dp)
+                .size(200.dp) // Adjusted size
                 .padding(bottom = 24.dp),
             contentScale = ContentScale.Fit
         )
+
+        // Subtitle Text
+        Text(
+            text = "Bouldering Progression Has Never Been Easier",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Medium,
+            color = Color.Black,
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
+
+        // Register Button (Larger and more prominent)
+        Button(
+            onClick = onRegisterClick,
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .height(55.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFD32F2F), // Red color matching the image
+                contentColor = Color.White
+            ),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text(
+                text = "Sign Up For Free",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Login Button
         Button(
             onClick = onLoginClick,
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
+                .fillMaxWidth(0.8f)
                 .height(50.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent,
-                contentColor = Color.White
+                containerColor = Color.LightGray,
+                contentColor = Color.Black
             ),
             shape = RoundedCornerShape(8.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(Color(0xFFF57C00), Color(0xFFFBC02D))
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Login",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Register Button
-        Button(
-            onClick = onRegisterClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .height(50.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent,
-                contentColor = Color.White
-            ),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(Color(0xFFF57C00), Color(0xFFFBC02D))
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Register",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
+            Text(
+                text = "Login",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }

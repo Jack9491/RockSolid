@@ -11,7 +11,7 @@ import com.google.firebase.auth.FirebaseAuth
 import ie.tus.rocksolid.screens.WelcomeScreen
 import ie.tus.rocksolid.screens.RegisterScreen
 import ie.tus.rocksolid.screens.LoginScreen
-// ie.tus.rocksolid.screens.HomeScreen
+import ie.tus.rocksolid.screens.HomeScreen
 import ie.tus.rocksolid.viewmodel.HomeViewModel
 
 
@@ -25,7 +25,7 @@ fun BuildNavigationGraph(
         composable(Screen.WelcomeScreen.route) { WelcomeScreen(navController) }
         composable(Screen.RegisterScreen.route) { RegisterScreen(navController) }
         composable(Screen.LoginScreen.route) { LoginScreen(navController) }
-        //composable(Screen.HomeScreen.route) { HomeScreen(navController) }
+        composable(Screen.HomeScreen.route) { HomeScreen(navController) }
 
     }
 }

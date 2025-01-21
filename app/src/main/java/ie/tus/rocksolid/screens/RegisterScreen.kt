@@ -1,6 +1,7 @@
 package ie.tus.rocksolid.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,7 +10,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -17,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
+import ie.tus.rocksolid.R
 
 // RegisterScreen - Entry point for user registration with Firebase Authentication
 @Composable
@@ -55,136 +59,125 @@ fun RegisterScreen(navController: NavHostController) {
     }
 }
 
-// RegisterScreenContent - UI content for registration functionality
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RegisterScreenContent(
-    onRegisterSubmit: (String, String) -> Unit, // Callback for registration action
-    isLoading: Boolean // Flag to show loading indicator
+    onRegisterSubmit: (String, String) -> Unit,
+    isLoading: Boolean
 ) {
-    // State for input fields
     val name = remember { mutableStateOf("") }
     val email = remember { mutableStateOf("") }
     val username = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
 
-    // Main layout container
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF101010)) // Dark background
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center, // Center vertically
-        horizontalAlignment = Alignment.CenterHorizontally // Center horizontally
+            .background(Color.White)
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Screen Title
-        Text(
-            text = "Register",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFFFBC02D),
-            modifier = Modifier.padding(bottom = 24.dp)
+        Image(
+            painter = painterResource(id = R.drawable.ic_logo),
+            contentDescription = "App Logo",
+            modifier = Modifier
+                .size(150.dp)
+                .padding(bottom = 24.dp),
+            contentScale = ContentScale.Fit
         )
 
-        // Name Input Field
         OutlinedTextField(
             value = name.value,
             onValueChange = { name.value = it },
-            label = { Text("Name", color = Color.Gray) },
-            textStyle = TextStyle(color = Color.White),
+            label = { Text("Name", color = Color.Black) },
+            textStyle = TextStyle(color = Color.Black),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
             shape = RoundedCornerShape(12.dp),
             colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = Color(0xFFFBC02D),
+                focusedBorderColor = Color.Black,
                 unfocusedBorderColor = Color.Gray,
-                //textColor = Color.White,
-                cursorColor = Color.White
+                cursorColor = Color.Black
             )
         )
 
-        // Email Input Field
         OutlinedTextField(
             value = email.value,
             onValueChange = { email.value = it },
-            label = { Text("Email", color = Color.Gray) },
-            textStyle = TextStyle(color = Color.White),
+            label = { Text("Email Address", color = Color.Black) },
+            textStyle = TextStyle(color = Color.Black),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
             shape = RoundedCornerShape(12.dp),
             colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = Color(0xFFFBC02D),
+                focusedBorderColor = Color.Black,
                 unfocusedBorderColor = Color.Gray,
-                //textColor = Color.White,
-                cursorColor = Color.White
+                cursorColor = Color.Black
             )
         )
 
-        // Username Input Field
-        OutlinedTextField(
-            value = username.value,
-            onValueChange = { username.value = it },
-            label = { Text("Username", color = Color.Gray) },
-            textStyle = TextStyle(color = Color.White),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = Color(0xFFFBC02D),
-                unfocusedBorderColor = Color.Gray,
-                //textColor = Color.White,
-                cursorColor = Color.White
-            )
-        )
-
-        // Password Input Field
         OutlinedTextField(
             value = password.value,
             onValueChange = { password.value = it },
-            label = { Text("Password", color = Color.Gray) },
-            textStyle = TextStyle(color = Color.White),
+            label = { Text("Password", color = Color.Black) },
+            textStyle = TextStyle(color = Color.Black),
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedBorderColor = Color.Black,
+                unfocusedBorderColor = Color.Gray,
+                cursorColor = Color.Black
+            )
+        )
+
+        OutlinedTextField(
+            value = username.value,
+            onValueChange = { username.value = it },
+            label = { Text("Confirm Password", color = Color.Black) },
+            textStyle = TextStyle(color = Color.Black),
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 24.dp),
             shape = RoundedCornerShape(12.dp),
             colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = Color(0xFFFBC02D),
+                focusedBorderColor = Color.Black,
                 unfocusedBorderColor = Color.Gray,
-                cursorColor = Color.White
+                cursorColor = Color.Black
             )
         )
 
-        // Register Button
         Button(
             onClick = {
-                onRegisterSubmit(email.value, password.value) // Trigger registration action
+                onRegisterSubmit(email.value, password.value)
             },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
             enabled = !isLoading,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFFBC02D),
-                contentColor = Color.White
+                containerColor = Color.White,
+                contentColor = Color.Red
             ),
             shape = RoundedCornerShape(8.dp)
         ) {
             if (isLoading) {
-                // Show loading spinner when registering
                 CircularProgressIndicator(
-                    color = Color.White,
+                    color = Color.Red,
                     modifier = Modifier.size(24.dp)
                 )
             } else {
-                // Default button text
                 Text(
-                    text = "Register",
+                    text = "Sign Up",
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Red
                 )
             }
         }
