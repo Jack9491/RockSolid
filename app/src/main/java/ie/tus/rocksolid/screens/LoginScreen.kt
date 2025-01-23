@@ -1,6 +1,5 @@
 package ie.tus.rocksolid.screens
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -62,6 +61,9 @@ private fun LoginScreenContent(
 ) {
     val email = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
+
+    val instantEmail = "jf@gmail.com"
+    val instantPassword = "password123"
 
     Column(
         modifier = Modifier
@@ -126,6 +128,25 @@ private fun LoginScreenContent(
                 CircularProgressIndicator(color = Color.Red, modifier = Modifier.size(24.dp))
             } else {
                 Text("Login", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(40.dp))
+
+        Button(
+            onClick = { onLoginSubmit(instantEmail, instantPassword) },
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            enabled = !isLoading,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.White,
+                contentColor = Color(0xFFD32F2F)
+            ),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(color = Color.Red, modifier = Modifier.size(24.dp))
+            } else {
+                Text("Instant Login", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
 
