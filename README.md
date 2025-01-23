@@ -19,3 +19,12 @@
 # Commit 3
 1. Home Screen added with cards to access Training Programs and the Progress Dashboard.
 2. Instant Login Button Added
+
+---
+
+# Commit 4
+1. UX clean up on home screen
+2. Nav to Training Program Screen
+3. Added an interactive calender to allow user to see current workouts and previous.
+4. Added a checkbox system to track users workout completion
+5. UX polish to match apps theme
