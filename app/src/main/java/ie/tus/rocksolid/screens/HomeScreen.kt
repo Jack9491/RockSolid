@@ -9,6 +9,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -25,9 +27,9 @@ import ie.tus.rocksolid.R
 fun HomeScreen(navController: NavHostController) {
     val context = LocalContext.current
     val auth = remember { FirebaseAuth.getInstance() }
-    val userName = "Jack" // Placeholder, replace with actual user data
+    val userName = "Jack" // Placeholder
     val climbingLevel = "Intermediate"
-    val completedRoutes = 45 // Placeholder data
+    val completedRoutes = 45 // Placeholder
     val currentTraining = "Strength & Endurance"
     val currentProgress = "Week 1"
 
@@ -45,10 +47,10 @@ fun HomeScreen(navController: NavHostController) {
             Spacer(modifier = Modifier.height(20.dp))
 
             // Training Program Section
-            TrainingProgramSection(currentTraining)
+            TrainingProgramSection(currentTraining,  navController)
 
             // Progress Dashboard Section
-            ProgressDashboard(currentTraining)
+            ProgressDashboard(currentProgress, navController)
         }
     }
 }
@@ -56,51 +58,83 @@ fun HomeScreen(navController: NavHostController) {
 @Composable
 fun ProfileCard(userName: String, level: String, completedRoutes: Int) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .shadow(8.dp, shape = RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.LightGray)
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFD32F2F)) // Light blue background
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
-                painter = painterResource(id = R.drawable.ic_profile_pic), // Replace with actual user image
+                painter = painterResource(id = R.drawable.ic_profile_pic),
                 contentDescription = "Profile Picture",
-                modifier = Modifier.size(150.dp)
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(50)) // Circular image
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column {
-                Text(text = userName, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Text(text = "Level: $level", fontSize = 16.sp, color = Color.Gray)
-                Text(text = "Routes Completed: $completedRoutes", fontSize = 14.sp, color = Color.DarkGray)
+                Text(text = userName, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_level), // Level icon
+                        contentDescription = "Level Icon",
+                        modifier = Modifier.size(18.dp),
+                        tint = Color.Black
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = "Level: $level", fontSize = 16.sp, color = Color.White)
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_routes), // Routes completed icon
+                        contentDescription = "Routes Icon",
+                        modifier = Modifier.size(18.dp),
+                        tint = Color.Black
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = "Routes Completed: $completedRoutes", fontSize = 14.sp, color = Color.White)
+                }
             }
         }
     }
 }
 
+
 @Composable
-fun TrainingProgramSection(currentTraining: String) {
+fun TrainingProgramSection(currentTraining: String, navController: NavHostController) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.LightGray)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally // Center content
+        ) {
             Image(
                 painter = painterResource(id = R.drawable.ic_training_plan),
                 contentDescription = "Training Plan",
                 modifier = Modifier
                     .size(150.dp)
                     .padding(bottom = 24.dp),
-            contentScale = ContentScale.Fit
+                contentScale = ContentScale.Fit
             )
             Text(text = "Training Program", fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = "Current Focus: $currentTraining", fontSize = 16.sp, color = Color.Gray)
             Spacer(modifier = Modifier.height(12.dp))
             Button(
-                onClick = { /* Navigate to training details */ },
+                onClick = { navController.navigate("trainingProgramScreen") },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
             ) {
@@ -111,13 +145,16 @@ fun TrainingProgramSection(currentTraining: String) {
 }
 
 @Composable
-fun ProgressDashboard(currentProgress: String) {
+fun ProgressDashboard(currentProgress: String, navController: NavHostController) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.LightGray)
     ) {
-        Column (modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally // Center content
+        ) {
             Image(
                 painter = painterResource(id = R.drawable.ic_progress_dashboard),
                 contentDescription = "Progress Dashboard",
@@ -131,7 +168,7 @@ fun ProgressDashboard(currentProgress: String) {
             Text(text = "Current Focus: $currentProgress", fontSize = 16.sp, color = Color.Gray)
             Spacer(modifier = Modifier.height(12.dp))
             Button(
-                onClick = { /* Navigate to progress dashboard */ },
+                onClick = { navController.navigate("ProgressDashboardScreen") },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
             ) {

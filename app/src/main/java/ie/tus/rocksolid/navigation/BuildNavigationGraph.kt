@@ -12,6 +12,7 @@ import ie.tus.rocksolid.screens.WelcomeScreen
 import ie.tus.rocksolid.screens.RegisterScreen
 import ie.tus.rocksolid.screens.LoginScreen
 import ie.tus.rocksolid.screens.HomeScreen
+import ie.tus.rocksolid.screens.TrainingProgramScreen
 import ie.tus.rocksolid.viewmodel.HomeViewModel
 
 
@@ -26,6 +27,7 @@ fun BuildNavigationGraph(
         composable(Screen.RegisterScreen.route) { RegisterScreen(navController) }
         composable(Screen.LoginScreen.route) { LoginScreen(navController) }
         composable(Screen.HomeScreen.route) { HomeScreen(navController) }
-
+        composable(Screen.TrainingProgramScreen.route) { TrainingProgramScreen(navController) }
+        composable(Screen.TrainingProgramScreen.route) { TrainingProgramScreen(navController) }
     }
 }

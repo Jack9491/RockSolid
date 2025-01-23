@@ -25,7 +25,7 @@ fun WelcomeScreen(navController: NavHostController) {
     Surface(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F5F5)) // Light grey background to match the image
+            .background(Color(0xFFF5F5F5))
     ) {
         WelcomeScreenContent(
             onLoginClick = {
@@ -79,14 +79,14 @@ private fun WelcomeScreenContent(
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
-        // Register Button (Larger and more prominent)
+        // Register Button
         Button(
             onClick = onRegisterClick,
             modifier = Modifier
                 .fillMaxWidth(0.8f)
                 .height(55.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFD32F2F), // Red color matching the image
+                containerColor = Color(0xFFD32F2F), // RockSolid Red
                 contentColor = Color.White
             ),
             shape = RoundedCornerShape(8.dp)
