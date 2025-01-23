@@ -15,3 +15,7 @@
 2. UX/UI remodelled to align with apps brand
 
 ---
+
+# Commit 3
+1. Home Screen added with cards to access Training Programs and the Progress Dashboard.
+2. Instant Login Button Added
