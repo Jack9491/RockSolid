@@ -30,8 +30,15 @@
 5. UX polish to match apps theme
 
 --- 
+
 # Commit 5
 1. Added the Progress Dashboard
 2. Added Back buttons to screens for navigation
 3. Added a Logout button
 4. Matched button colours with app theme for consistency on multiple screens
+
+---
+
+# Commit 6
+1. Fixed the notes issue in the training plan screen
+2. Edited the UI to make exercises more readable
