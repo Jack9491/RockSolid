@@ -28,3 +28,10 @@
 3. Added an interactive calender to allow user to see current workouts and previous.
 4. Added a checkbox system to track users workout completion
 5. UX polish to match apps theme
+
+--- 
+# Commit 5
+1. Added the Progress Dashboard
+2. Added Back buttons to screens for navigation
+3. Added a Logout button
+4. Matched button colours with app theme for consistency on multiple screens
