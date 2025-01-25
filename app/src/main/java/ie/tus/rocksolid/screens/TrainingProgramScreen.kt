@@ -17,25 +17,31 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import java.util.Calendar
 
-
 @Composable
 fun TrainingProgramScreen(navController: NavHostController) {
     val today = remember { Calendar.getInstance().get(Calendar.DAY_OF_MONTH) }
     var selectedDay by remember { mutableStateOf(today) }
-    val workoutCompletion = remember { mutableStateMapOf<String, String>() } // Tracks completed/uncompleted with notes
-    val notes = remember { mutableStateListOf<String>() } // Notes for uncompleted workouts
-    val currentExerciseIndex = remember { mutableStateOf(0) } // Track the current active exercise
+    val workoutCompletion = remember { mutableStateMapOf<String, String>() }
+    val notes = remember { mutableStateListOf<String>() }
+    val currentExerciseIndex = remember { mutableStateOf(0) }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .background(Color(0xFFF5F5F5)) // Light gray background for the screen
+    ) {
         // Back Button
         Button(
             onClick = { navController.popBackStack() },
-            modifier = Modifier.padding(bottom = 16.dp),
+            modifier = Modifier
+                .padding(bottom = 16.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
         ) {
             Text("Back", color = Color.White)
         }
 
+        // Header
         Text(
             text = "Training Program",
             fontSize = 24.sp,
@@ -44,39 +50,65 @@ fun TrainingProgramScreen(navController: NavHostController) {
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // Calendar View
-        CustomCalendar(today, selectedDay) { day ->
-            selectedDay = day // Update selectedDay when a day is clicked
-            currentExerciseIndex.value = 0 // Reset active exercise when the day changes
+        // Calendar Section
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(4.dp)
+        ) {
+            CustomCalendar(today, selectedDay) { day ->
+                selectedDay = day
+                currentExerciseIndex.value = 0
+            }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Training Details
-        TrainingDetails(selectedDay, today, workoutCompletion, notes, currentExerciseIndex)
+        // Training Details Section
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            TrainingDetails(
+                selectedDay = selectedDay,
+                today = today,
+                workoutCompletion = workoutCompletion,
+                notes = notes,
+                currentExerciseIndex = currentExerciseIndex
+            )
+        }
 
         // Notes Section
-        if (notes.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(16.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+        NotesSection(notes)
+    }
+}
+
+@Composable
+fun NotesSection(notes: List<String>) {
+    if (notes.isNotEmpty()) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFFAFAFA)),
+            elevation = CardDefaults.cardElevation(4.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = "Notes",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFD32F2F), // Red header for the notes
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                notes.forEach { note ->
                     Text(
-                        text = "Notes",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        text = "- $note",
+                        fontSize = 16.sp,
+                        color = Color.Black,
+                        modifier = Modifier.padding(vertical = 4.dp)
                     )
-                    notes.forEach { note ->
-                        Text(
-                            text = "- $note",
-                            fontSize = 16.sp,
-                            color = Color.Gray,
-                            modifier = Modifier.padding(top = 8.dp)
-                        )
-                    }
                 }
             }
         }
@@ -146,91 +178,83 @@ fun TrainingDetails(
 ) {
     var showReasonDialog by remember { mutableStateOf<Pair<Int, String>?>(null) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
-        ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                val workoutDetails = if (selectedDay == today) dummyWorkoutDetails else getClimbingWorkoutsForDay(selectedDay)
-                items(count = workoutDetails.size) { index ->
-                    val workout = workoutDetails[index]
-                    val status = workoutCompletion["$selectedDay-$index"] ?: ""
+    LazyColumn(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        val workoutDetails = if (selectedDay == today) dummyWorkoutDetails else getClimbingWorkoutsForDay(selectedDay)
+        items(workoutDetails.size) { index ->
+            val workout = workoutDetails[index]
+            val status = workoutCompletion["$selectedDay-$index"] ?: ""
 
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp)
-                            .background(if (index == currentExerciseIndex.value) Color(0xFFFFCDD2) else Color.Transparent)
-                    ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (index == currentExerciseIndex.value) Color(0xFFFFCDD2) else Color.White
+                ),
+                elevation = CardDefaults.cardElevation(4.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = workout,
+                        fontSize = 16.sp,
+                        color = Color.Black,
+                        fontWeight = if (index == currentExerciseIndex.value) FontWeight.Bold else FontWeight.Normal
+                    )
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = status == "completed",
+                            onCheckedChange = if (selectedDay == today) {
+                                { checked ->
+                                    if (checked) {
+                                        workoutCompletion["$selectedDay-$index"] = "completed"
+                                        currentExerciseIndex.value = index + 1
+                                    }
+                                }
+                            } else null
+                        )
                         Text(
-                            text = workout,
+                            text = "Completed",
                             fontSize = 16.sp,
                             color = Color.Black,
-                            fontWeight = if (index == currentExerciseIndex.value) FontWeight.Bold else FontWeight.Normal,
-                            modifier = Modifier.padding(bottom = 8.dp)
+                            modifier = Modifier.padding(end = 16.dp)
                         )
 
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(
-                                checked = status == "completed",
-                                onCheckedChange = if (selectedDay == today) {
-                                    { checked ->
-                                        if (checked) {
-                                            workoutCompletion["$selectedDay-$index"] = "completed"
-                                            currentExerciseIndex.value = index + 1 // Move to the next exercise
-                                        }
+                        Checkbox(
+                            checked = status == "incomplete",
+                            onCheckedChange = if (selectedDay == today) {
+                                { checked ->
+                                    if (checked) {
+                                        workoutCompletion["$selectedDay-$index"] = "incomplete"
+                                        showReasonDialog = index to workout
                                     }
-                                } else null
-                            )
-                            Text(
-                                text = "Completed",
-                                fontSize = 16.sp,
-                                color = Color.Black,
-                                modifier = Modifier.padding(end = 16.dp)
-                            )
-
-                            Checkbox(
-                                checked = status == "incomplete",
-                                onCheckedChange = if (selectedDay == today) {
-                                    { checked ->
-                                        if (checked) {
-                                            workoutCompletion["$selectedDay-$index"] = "incomplete"
-                                            currentExerciseIndex.value = index + 1 // Allow moving to next exercise
-                                            showReasonDialog = index to workout // Trigger the dialog
-                                        }
-                                    }
-                                } else null
-                            )
-                            Text(
-                                text = "Not Completed",
-                                fontSize = 16.sp,
-                                color = Color.Black
-                            )
-                        }
+                                }
+                            } else null
+                        )
+                        Text(
+                            text = "Not Completed",
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
                     }
                 }
             }
         }
+    }
 
-        // Show the dialog if triggered
-        showReasonDialog?.let { (index, workout) ->
-            ReasonDialog(
-                workout = workout,
-                onDismiss = { showReasonDialog = null },
-                onConfirm = { reason ->
-                    notes.add("$workout - Reason: $reason")
-                    showReasonDialog = null
-                }
-            )
-        }
+    // Show Reason Dialog
+    showReasonDialog?.let { (index, workout) ->
+        ReasonDialog(
+            workout = workout,
+            onDismiss = { showReasonDialog = null },
+            onConfirm = { reason ->
+                notes.add("$workout - Reason: $reason")
+            }
+        )
     }
 }
-
 
 
 @Composable
