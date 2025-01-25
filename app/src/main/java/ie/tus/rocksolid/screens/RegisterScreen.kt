@@ -162,8 +162,8 @@ private fun RegisterScreenContent(
                 .height(50.dp),
             enabled = !isLoading,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White,
-                contentColor = Color.Red
+                containerColor = Color(0xFFD32F2F),
+                contentColor = Color.White
             ),
             shape = RoundedCornerShape(8.dp)
         ) {
@@ -177,7 +177,7 @@ private fun RegisterScreenContent(
                     text = "Sign Up",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Red
+                    color = Color.White
                 )
             }
         }

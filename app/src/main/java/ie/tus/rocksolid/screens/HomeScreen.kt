@@ -15,7 +15,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,18 +38,40 @@ fun HomeScreen(navController: NavHostController) {
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.Top,
+            verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // User Profile Card
-            ProfileCard(userName, climbingLevel, completedRoutes)
-            Spacer(modifier = Modifier.height(20.dp))
+            Column(
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // User Profile Card
+                ProfileCard(userName, climbingLevel, completedRoutes)
+                Spacer(modifier = Modifier.height(20.dp))
 
-            // Training Program Section
-            TrainingProgramSection(currentTraining,  navController)
+                // Training Program Section
+                TrainingProgramSection(currentTraining, navController)
 
-            // Progress Dashboard Section
-            ProgressDashboard(currentProgress, navController)
+                // Progress Dashboard Section
+                ProgressDashboard(currentProgress, navController)
+            }
+
+            // Logout Button
+            Button(
+                onClick = {
+                    auth.signOut()
+                    Toast.makeText(context, "Logged out successfully", Toast.LENGTH_SHORT).show()
+                    navController.navigate("welcomeScreen") {
+                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                    }
+                },
+                modifier = Modifier
+                    .padding(bottom = 16.dp)
+                    .fillMaxWidth(0.5f),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
+            ) {
+                Text("Logout", color = Color.White, fontSize = 16.sp)
+            }
         }
     }
 }
@@ -108,7 +129,6 @@ fun ProfileCard(userName: String, level: String, completedRoutes: Int) {
         }
     }
 }
-
 
 @Composable
 fun TrainingProgramSection(currentTraining: String, navController: NavHostController) {

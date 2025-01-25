@@ -119,8 +119,8 @@ private fun LoginScreenContent(
             modifier = Modifier.fillMaxWidth().height(50.dp),
             enabled = !isLoading,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White,
-                contentColor = Color(0xFFD32F2F)
+                containerColor = Color(0xFFD32F2F),
+                contentColor = Color.White
             ),
             shape = RoundedCornerShape(8.dp)
         ) {
@@ -138,8 +138,8 @@ private fun LoginScreenContent(
             modifier = Modifier.fillMaxWidth().height(50.dp),
             enabled = !isLoading,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White,
-                contentColor = Color(0xFFD32F2F)
+                containerColor = Color(0xFFD32F2F),
+                contentColor = Color.White
             ),
             shape = RoundedCornerShape(8.dp)
         ) {

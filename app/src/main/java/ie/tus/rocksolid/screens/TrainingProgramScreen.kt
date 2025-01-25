@@ -31,7 +31,7 @@ fun TrainingProgramScreen(navController: NavHostController) {
         Button(
             onClick = { navController.popBackStack() },
             modifier = Modifier.padding(bottom = 16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF5F5F5))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
         ) {
             Text("Back", color = Color.White)
         }
