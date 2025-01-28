@@ -42,3 +42,9 @@
 # Commit 6
 1. Fixed the notes issue in the training plan screen
 2. Edited the UI to make exercises more readable
+
+---
+
+# Commit 7
+1. AuthViewModel added
+2. Login functionality added to AVM
