@@ -48,3 +48,12 @@
 # Commit 7
 1. AuthViewModel added
 2. Login functionality added to AVM
+
+---
+
+# Commit 8
+1. Surveys added to the app to categorise users into different skill levels (beginner, intermediate, advanced)
+2. two types of surveys, quick & tailored
+3. surveyviewmodel hold the user answers right now, needs to be sent to the database by next commit.
+4. UX polish required for the home page, add a nav draw/hamburg for additional features
+
