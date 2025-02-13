@@ -8,6 +8,16 @@ sealed class Screen(val route: String) {
     object HomeScreen: Screen("homeScreen")
     object TrainingProgramScreen: Screen("trainingProgramScreen")
     object ProgressDashboardScreen: Screen("progressDashboardScreen")
+    object SurveyIntroductionScreen : Screen("surveyIntroductionScreen")
+    object QuickSetupScreen : Screen("quickSetupScreen")
+    object TailoredSetupSection1 : Screen("tailoredSetupSection1")
+    object TailoredSetupSection2 : Screen("tailoredSetupSection2")
+    object TailoredSetupSection3 : Screen("tailoredSetupSection3")
+    object TailoredSetupSection4 : Screen("tailoredSetupSection4")
+    object SurveySummaryScreen : Screen("surveySummaryScreen")
+
+
+
 
 }
 
@@ -17,6 +27,12 @@ val screens = listOf(
     Screen.RegisterScreen,
     Screen.HomeScreen,
     Screen.TrainingProgramScreen,
-    Screen.ProgressDashboardScreen
-
-)
+    Screen.ProgressDashboardScreen,
+    Screen.SurveyIntroductionScreen,
+    Screen.QuickSetupScreen,
+    Screen.TailoredSetupSection1,
+    Screen.TailoredSetupSection2,
+    Screen.TailoredSetupSection3,
+    Screen.TailoredSetupSection4,
+    Screen.SurveySummaryScreen
+    )

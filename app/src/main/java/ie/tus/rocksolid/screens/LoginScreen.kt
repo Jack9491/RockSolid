@@ -1,7 +1,6 @@
 package ie.tus.rocksolid.screens
 
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -11,15 +10,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import ie.tus.rocksolid.R
 import ie.tus.rocksolid.viewmodel.AuthViewModel
 
@@ -30,15 +27,9 @@ fun LoginScreen(
     authViewModel: AuthViewModel,
     onLoginSuccess: () -> Unit
 ) {
-    val context = LocalContext.current
-    val auth = remember { FirebaseAuth.getInstance() }
-    val isLoading by remember { mutableStateOf(false) }
-
     val email = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
-
-    val instantEmail = "jf@gmail.com"
-    val instantPassword = "password123"
+    val isLoading = remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -61,15 +52,9 @@ fun LoginScreen(
         OutlinedTextField(
             value = email.value,
             onValueChange = { email.value = it },
-            label = { Text("Email Address", color = Color.Gray) },
-            textStyle = TextStyle(color = Color.Black),
+            label = { Text("Email Address") },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = Color.Black,
-                unfocusedBorderColor = Color.Gray,
-                cursorColor = Color.Black
-            )
+            shape = RoundedCornerShape(8.dp)
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -77,221 +62,45 @@ fun LoginScreen(
         OutlinedTextField(
             value = password.value,
             onValueChange = { password.value = it },
-            label = { Text("Password", color = Color.Gray) },
-            textStyle = TextStyle(color = Color.Black),
+            label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = Color.Black,
-                unfocusedBorderColor = Color.Gray,
-                cursorColor = Color.Black
-            )
+            shape = RoundedCornerShape(8.dp)
         )
 
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
             onClick = {
+                isLoading.value = true
                 authViewModel.login(
                     email = email.value,
                     password = password.value,
                     onSuccess = {
                         onLoginSuccess()
+//                        navController.navigate("homeScreen") {
+//                            popUpTo("loginScreen") { inclusive = true }
+//                        }
+//                        isLoading.value = false
                     },
                     onError = { error ->
-                        Log.d("Testing", "Error: $error")
-                    })
+                        isLoading.value = false
+                        Log.d("LoginScreen", "Login failed: $error")
+                    }
+                )
             },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
-            enabled = !isLoading,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFD32F2F),
-                contentColor = Color.White
-            ),
+            enabled = !isLoading.value,
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
             shape = RoundedCornerShape(8.dp)
         ) {
-            if (isLoading) {
-                CircularProgressIndicator(color = Color.Red, modifier = Modifier.size(24.dp))
+            if (isLoading.value) {
+                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
             } else {
-                Text("Login", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text("Login", fontSize = 16.sp)
             }
-        }
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        Button(
-            onClick = {
-                authViewModel.login(
-                    instantEmail,
-                    instantPassword,
-                    onSuccess = {
-                        onLoginSuccess()
-                    },
-                    onError = {
-                        //Error
-                    }
-                )
-                      },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            enabled = !isLoading,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFD32F2F),
-                contentColor = Color.White
-            ),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(color = Color.Red, modifier = Modifier.size(24.dp))
-            } else {
-                Text("Instant Login", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        TextButton(onClick = { /* Forgot password logic */ }) {
-            Text("Forgot Password?", color = Color.Black)
-        }
-    }
-//    Surface(
-//        modifier = Modifier.fillMaxSize()
-//    ) {
-//        LoginScreenContent(
-//            onLoginSubmit = { email, password ->
-//              authViewModel.login(email, password)
-////                isLoading = true
-////                auth.signInWithEmailAndPassword(email, password)
-////                    .addOnCompleteListener { task ->
-////                        isLoading = false
-////                        if (task.isSuccessful) {
-////                            Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
-////                            navController.navigate("homeScreen")
-////                        } else {
-////                            Toast.makeText(
-////                                context,
-////                                "Login Failed: ${task.exception?.message}",
-////                                Toast.LENGTH_LONG
-////                            ).show()
-////                        }
-////                    }
-//            },
-//            isLoading = isLoading
-//        )
-//    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun LoginScreenContent(
-    onLoginSubmit: (String, String) -> Unit,
-    isLoading: Boolean
-) {
-    val email = remember { mutableStateOf("") }
-    val password = remember { mutableStateOf("") }
-
-    val instantEmail = "jf@gmail.com"
-    val instantPassword = "password123"
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFEAEAEA))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(40.dp))
-        Image(
-            painter = painterResource(id = R.drawable.ic_logo),
-            contentDescription = "App Logo",
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp)
-        )
-        Spacer(modifier = Modifier.height(20.dp))
-
-        OutlinedTextField(
-            value = email.value,
-            onValueChange = { email.value = it },
-            label = { Text("Email Address", color = Color.Gray) },
-            textStyle = TextStyle(color = Color.Black),
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = Color.Black,
-                unfocusedBorderColor = Color.Gray,
-                cursorColor = Color.Black
-            )
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        OutlinedTextField(
-            value = password.value,
-            onValueChange = { password.value = it },
-            label = { Text("Password", color = Color.Gray) },
-            textStyle = TextStyle(color = Color.Black),
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp),
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = Color.Black,
-                unfocusedBorderColor = Color.Gray,
-                cursorColor = Color.Black
-            )
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Button(
-            onClick = { onLoginSubmit(email.value, password.value) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            enabled = !isLoading,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFD32F2F),
-                contentColor = Color.White
-            ),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(color = Color.Red, modifier = Modifier.size(24.dp))
-            } else {
-                Text("Login", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        Button(
-            onClick = { onLoginSubmit(instantEmail, instantPassword) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            enabled = !isLoading,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFD32F2F),
-                contentColor = Color.White
-            ),
-            shape = RoundedCornerShape(8.dp)
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(color = Color.Red, modifier = Modifier.size(24.dp))
-            } else {
-                Text("Instant Login", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        TextButton(onClick = { /* Forgot password logic */ }) {
-            Text("Forgot Password?", color = Color.Black)
         }
     }
 }

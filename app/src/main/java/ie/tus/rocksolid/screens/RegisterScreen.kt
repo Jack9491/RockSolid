@@ -1,6 +1,6 @@
 package ie.tus.rocksolid.screens
 
-import android.widget.Toast
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -11,64 +11,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.google.firebase.auth.FirebaseAuth
 import ie.tus.rocksolid.R
-
-// RegisterScreen - Entry point for user registration with Firebase Authentication
-@Composable
-fun RegisterScreen(navController: NavHostController) {
-    val context = LocalContext.current // Access current context for Toast messages
-    val auth = remember { FirebaseAuth.getInstance() } // FirebaseAuth instance
-    var isLoading by remember { mutableStateOf(false) } // Loading state for the register button
-
-    Surface(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        // Register screen content
-        RegisterScreenContent(
-            onRegisterSubmit = { email, password ->
-                isLoading = true // Show loading state
-                auth.createUserWithEmailAndPassword(email, password)
-                    .addOnCompleteListener { task ->
-                        isLoading = false // Stop loading
-                        if (task.isSuccessful) {
-                            // Registration successful
-                            Toast.makeText(context, "Registration Successful", Toast.LENGTH_SHORT).show()
-                            navController.navigate("loginScreen") // Navigate to LoginScreen
-                        } else {
-                            // Registration failed, display error
-                            Toast.makeText(
-                                context,
-                                "Registration Failed: ${task.exception?.message}",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    }
-            },
-            isLoading = isLoading // Pass loading state to content
-        )
-    }
-}
+import ie.tus.rocksolid.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RegisterScreenContent(
-    onRegisterSubmit: (String, String) -> Unit,
-    isLoading: Boolean
+fun RegisterScreen(
+    navController: NavHostController,
+    authViewModel: AuthViewModel,
+    onRegisterSuccess: () -> Unit
 ) {
     val name = remember { mutableStateOf("") }
     val email = remember { mutableStateOf("") }
-    val username = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
+    val confirmPassword = remember { mutableStateOf("") }
+    val isLoading = remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -90,95 +53,80 @@ private fun RegisterScreenContent(
         OutlinedTextField(
             value = name.value,
             onValueChange = { name.value = it },
-            label = { Text("Name", color = Color.Black) },
+            label = { Text("Name") },
             textStyle = TextStyle(color = Color.Black),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = Color.Black,
-                unfocusedBorderColor = Color.Gray,
-                cursorColor = Color.Black
-            )
+            shape = RoundedCornerShape(12.dp)
         )
 
         OutlinedTextField(
             value = email.value,
             onValueChange = { email.value = it },
-            label = { Text("Email Address", color = Color.Black) },
+            label = { Text("Email Address") },
             textStyle = TextStyle(color = Color.Black),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = Color.Black,
-                unfocusedBorderColor = Color.Gray,
-                cursorColor = Color.Black
-            )
+            shape = RoundedCornerShape(12.dp)
         )
 
         OutlinedTextField(
             value = password.value,
             onValueChange = { password.value = it },
-            label = { Text("Password", color = Color.Black) },
+            label = { Text("Password") },
             textStyle = TextStyle(color = Color.Black),
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = Color.Black,
-                unfocusedBorderColor = Color.Gray,
-                cursorColor = Color.Black
-            )
+            shape = RoundedCornerShape(12.dp)
         )
 
         OutlinedTextField(
-            value = username.value,
-            onValueChange = { username.value = it },
-            label = { Text("Confirm Password", color = Color.Black) },
+            value = confirmPassword.value,
+            onValueChange = { confirmPassword.value = it },
+            label = { Text("Confirm Password") },
             textStyle = TextStyle(color = Color.Black),
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 24.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = Color.Black,
-                unfocusedBorderColor = Color.Gray,
-                cursorColor = Color.Black
-            )
+            shape = RoundedCornerShape(12.dp)
         )
 
         Button(
             onClick = {
-                onRegisterSubmit(email.value, password.value)
+                if (password.value == confirmPassword.value) {
+                    isLoading.value = true
+                    authViewModel.register(
+                        name = name.value,
+                        email = email.value,
+                        password = password.value,
+                        onSuccess = {
+                            onRegisterSuccess()
+                        },
+                        onError = { error ->
+                            isLoading.value = false
+                            Log.d("RegisterScreen", "Registration failed: $error")
+                        }
+                    )
+                } else {
+                    Log.d("RegisterScreen", "Passwords do not match")
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
-            enabled = !isLoading,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFD32F2F),
-                contentColor = Color.White
-            ),
+            enabled = !isLoading.value,
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
             shape = RoundedCornerShape(8.dp)
         ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    color = Color.Red,
-                    modifier = Modifier.size(24.dp)
-                )
+            if (isLoading.value) {
+                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
             } else {
-                Text(
-                    text = "Sign Up",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+                Text("Sign Up", fontSize = 16.sp, color = Color.White)
             }
         }
     }

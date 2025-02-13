@@ -1,5 +1,6 @@
 package ie.tus.rocksolid.screens
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -20,17 +21,53 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import ie.tus.rocksolid.R
+import kotlinx.coroutines.delay
+import ie.tus.rocksolid.viewmodel.AuthViewModel
 
 @Composable
-fun HomeScreen(navController: NavHostController) {
+fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
     val context = LocalContext.current
-    val auth = remember { FirebaseAuth.getInstance() }
-    val userName = "Jack" // Placeholder
-    val climbingLevel = "Intermediate"
-    val completedRoutes = 45 // Placeholder
-    val currentTraining = "Strength & Endurance"
-    val currentProgress = "Week 1"
+    val firestore = FirebaseFirestore.getInstance()
+    var isFirstTimeUser by remember { mutableStateOf(false) }
+    var checkCompleted by remember { mutableStateOf(false) }
+
+    // Check Firestore to determine if the user is a first-time user
+    LaunchedEffect(Unit) {
+        val userId = authViewModel.getCurrentUserUid()
+        if (userId != null) {
+            firestore.collection("Users").document(userId)
+                .get()
+                .addOnSuccessListener { document ->
+                    isFirstTimeUser = document.getBoolean("isFirstTime") ?: true
+                    checkCompleted = true
+                    Log.d("HomeScreen", "isFirstTimeUser: $isFirstTimeUser")
+                }
+                .addOnFailureListener {
+                    checkCompleted = true
+                    Log.d("HomeScreen", "Firestore error: ${it.message}")
+                }
+        } else {
+            checkCompleted = true
+            Log.d("HomeScreen", "User ID is null. Cannot check Firestore.")
+        }
+    }
+
+    // Navigate to the survey after a delay if it's the user's first time
+    LaunchedEffect(checkCompleted, isFirstTimeUser) {
+        if (checkCompleted && isFirstTimeUser) {
+            delay(5000)  // 5-second delay
+            try {
+                navController.navigate("surveyIntroductionScreen") {
+                    popUpTo("homeScreen") { inclusive = false }  // Prevent stack clearing to start destination
+                }
+                Log.d("HomeScreen", "Navigating to Survey Introduction Screen")
+            } catch (e: Exception) {
+                Log.e("HomeScreen", "Navigation failed: ${e.message}")
+            }
+        }
+    }
 
 
     Surface(
@@ -45,21 +82,16 @@ fun HomeScreen(navController: NavHostController) {
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // User Profile Card
-                ProfileCard(userName, climbingLevel, completedRoutes)
+                ProfileCard("Jack", "Intermediate", 45)
                 Spacer(modifier = Modifier.height(20.dp))
-
-                // Training Program Section
-                TrainingProgramSection(currentTraining, navController)
-
-                // Progress Dashboard Section
-                ProgressDashboard(currentProgress, navController)
+                SurveySection(navController)
+                TrainingProgramSection("Strength & Endurance", navController)
+                ProgressDashboard("Week 1", navController)
             }
 
-            // Logout Button
             Button(
                 onClick = {
-                    auth.signOut()
+                    FirebaseAuth.getInstance().signOut()
                     Toast.makeText(context, "Logged out successfully", Toast.LENGTH_SHORT).show()
                     navController.navigate("welcomeScreen") {
                         popUpTo(navController.graph.startDestinationId) { inclusive = true }
@@ -76,6 +108,8 @@ fun HomeScreen(navController: NavHostController) {
     }
 }
 
+
+// ProfileCard Composable
 @Composable
 fun ProfileCard(userName: String, level: String, completedRoutes: Int) {
     Card(
@@ -84,7 +118,7 @@ fun ProfileCard(userName: String, level: String, completedRoutes: Int) {
             .padding(16.dp)
             .shadow(8.dp, shape = RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFD32F2F)) // Light blue background
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFD32F2F))
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -95,16 +129,15 @@ fun ProfileCard(userName: String, level: String, completedRoutes: Int) {
                 contentDescription = "Profile Picture",
                 modifier = Modifier
                     .size(80.dp)
-                    .clip(RoundedCornerShape(50)) // Circular image
+                    .clip(RoundedCornerShape(50))
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(text = userName, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(4.dp))
-
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_level), // Level icon
+                        painter = painterResource(id = R.drawable.ic_level),
                         contentDescription = "Level Icon",
                         modifier = Modifier.size(18.dp),
                         tint = Color.Black
@@ -112,12 +145,10 @@ fun ProfileCard(userName: String, level: String, completedRoutes: Int) {
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(text = "Level: $level", fontSize = 16.sp, color = Color.White)
                 }
-
                 Spacer(modifier = Modifier.height(4.dp))
-
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_routes), // Routes completed icon
+                        painter = painterResource(id = R.drawable.ic_routes),
                         contentDescription = "Routes Icon",
                         modifier = Modifier.size(18.dp),
                         tint = Color.Black
@@ -130,6 +161,39 @@ fun ProfileCard(userName: String, level: String, completedRoutes: Int) {
     }
 }
 
+// User Survey Section
+@Composable
+fun SurveySection(navController: NavHostController) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.LightGray)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_survey),
+                contentDescription = "Survey",
+                modifier = Modifier.size(150.dp).padding(bottom = 24.dp),
+                contentScale = ContentScale.Fit
+            )
+            Text(text = "Survey", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(
+                onClick = { navController.navigate("surveyIntroductionScreen") },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
+            ) {
+                Text("Survey", fontSize = 16.sp, color = Color.White)
+            }
+        }
+    }
+}
+
+
+// Training Program Section
 @Composable
 fun TrainingProgramSection(currentTraining: String, navController: NavHostController) {
     Card(
@@ -139,14 +203,12 @@ fun TrainingProgramSection(currentTraining: String, navController: NavHostContro
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally // Center content
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
                 painter = painterResource(id = R.drawable.ic_training_plan),
                 contentDescription = "Training Plan",
-                modifier = Modifier
-                    .size(150.dp)
-                    .padding(bottom = 24.dp),
+                modifier = Modifier.size(150.dp).padding(bottom = 24.dp),
                 contentScale = ContentScale.Fit
             )
             Text(text = "Training Program", fontSize = 20.sp, fontWeight = FontWeight.Bold)
@@ -164,6 +226,7 @@ fun TrainingProgramSection(currentTraining: String, navController: NavHostContro
     }
 }
 
+// Progress Dashboard Section
 @Composable
 fun ProgressDashboard(currentProgress: String, navController: NavHostController) {
     Card(
@@ -173,14 +236,12 @@ fun ProgressDashboard(currentProgress: String, navController: NavHostController)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally // Center content
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
                 painter = painterResource(id = R.drawable.ic_progress_dashboard),
                 contentDescription = "Progress Dashboard",
-                modifier = Modifier
-                    .size(150.dp)
-                    .padding(bottom = 24.dp),
+                modifier = Modifier.size(150.dp).padding(bottom = 24.dp),
                 contentScale = ContentScale.Fit
             )
             Text(text = "Progress Dashboard", fontSize = 20.sp, fontWeight = FontWeight.Bold)
