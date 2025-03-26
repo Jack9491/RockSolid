@@ -34,7 +34,7 @@ class AuthViewModel(
         firebaseAuth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    Log.d("TestingScreen",  "Entered is sucsefful")
+                    Log.d("TestingScreen",  "Entered is successful")
                     val userId = firebaseAuth.currentUser?.uid ?: "1000"
                     val userData = mapOf(
                         "email" to email,

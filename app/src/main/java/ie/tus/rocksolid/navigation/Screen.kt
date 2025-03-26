@@ -15,8 +15,9 @@ sealed class Screen(val route: String) {
     object TailoredSetupSection3 : Screen("tailoredSetupSection3")
     object TailoredSetupSection4 : Screen("tailoredSetupSection4")
     object SurveySummaryScreen : Screen("surveySummaryScreen")
-
-
+    object AchievementScreen : Screen("achievementScreen/{achievementIndex}") {
+        fun createRoute(index: Int) = "achievementScreen/$index"
+    }
 
 
 }
@@ -35,4 +36,4 @@ val screens = listOf(
     Screen.TailoredSetupSection3,
     Screen.TailoredSetupSection4,
     Screen.SurveySummaryScreen
-    )
+)

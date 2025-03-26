@@ -62,5 +62,11 @@ fun BuildNavigationGraph(
         composable(Screen.SurveySummaryScreen.route) {
             SurveySummaryScreen(navController, authViewModel, surveyViewModel)
         }
+
+        composable(Screen.AchievementScreen.route) { backStackEntry ->
+            val index = backStackEntry.arguments?.getString("achievementIndex")?.toIntOrNull() ?: 0
+            AchievementScreen(navController, index)
+        }
+
     }
 }

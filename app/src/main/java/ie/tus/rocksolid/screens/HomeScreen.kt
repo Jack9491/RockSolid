@@ -5,7 +5,9 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,6 +25,7 @@ import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import ie.tus.rocksolid.R
+import ie.tus.rocksolid.navigation.Screen
 import kotlinx.coroutines.delay
 import ie.tus.rocksolid.viewmodel.AuthViewModel
 
@@ -57,10 +60,10 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
     // Navigate to the survey after a delay if it's the user's first time
     LaunchedEffect(checkCompleted, isFirstTimeUser) {
         if (checkCompleted && isFirstTimeUser) {
-            delay(5000)  // 5-second delay
+            delay(30000)  // 30-second delay
             try {
                 navController.navigate("surveyIntroductionScreen") {
-                    popUpTo("homeScreen") { inclusive = false }  // Prevent stack clearing to start destination
+                    popUpTo("homeScreen") { inclusive = false }
                 }
                 Log.d("HomeScreen", "Navigating to Survey Introduction Screen")
             } catch (e: Exception) {
@@ -69,25 +72,24 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
         }
     }
 
-
     Surface(
-        modifier = Modifier.fillMaxSize().background(Color(0xFFF5F5F5))
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF5F5F5))
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                ProfileCard("Jack", "Intermediate", 45)
-                Spacer(modifier = Modifier.height(20.dp))
-                SurveySection(navController)
-                TrainingProgramSection("Strength & Endurance", navController)
-                ProgressDashboard("Week 1", navController)
-            }
+            ProfileCard("Jack", "Intermediate", 45)
+            Spacer(modifier = Modifier.height(20.dp))
+            SurveySection(navController)
+            TrainingProgramSection("Strength & Endurance", navController)
+            ProgressDashboard("Week 1", navController)
+            Spacer(modifier = Modifier.height(24.dp))
 
             Button(
                 onClick = {
@@ -98,20 +100,28 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
                     }
                 },
                 modifier = Modifier
-                    .padding(bottom = 16.dp)
-                    .fillMaxWidth(0.5f),
+                    .fillMaxWidth(0.5f)
+                    .padding(bottom = 16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
             ) {
                 Text("Logout", color = Color.White, fontSize = 16.sp)
             }
+
+            Button(
+                onClick = { navController.navigate(Screen.AchievementScreen.createRoute(0)) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
+            ) {
+                Text("Achievements", fontSize = 16.sp, color = Color.White)
+            }
+
         }
     }
 }
 
-
 // ProfileCard Composable
 @Composable
-fun ProfileCard(userName: String, level: String, completedRoutes: Int) {
+fun ProfileCard(userName: String, level: String, completedSessions: Int) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -154,7 +164,7 @@ fun ProfileCard(userName: String, level: String, completedRoutes: Int) {
                         tint = Color.Black
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "Routes Completed: $completedRoutes", fontSize = 14.sp, color = Color.White)
+                    Text(text = "Sessions Completed: $completedSessions", fontSize = 14.sp, color = Color.White)
                 }
             }
         }
@@ -165,7 +175,9 @@ fun ProfileCard(userName: String, level: String, completedRoutes: Int) {
 @Composable
 fun SurveySection(navController: NavHostController) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.LightGray)
     ) {
@@ -176,7 +188,9 @@ fun SurveySection(navController: NavHostController) {
             Image(
                 painter = painterResource(id = R.drawable.ic_survey),
                 contentDescription = "Survey",
-                modifier = Modifier.size(150.dp).padding(bottom = 24.dp),
+                modifier = Modifier
+                    .size(150.dp)
+                    .padding(bottom = 24.dp),
                 contentScale = ContentScale.Fit
             )
             Text(text = "Survey", fontSize = 20.sp, fontWeight = FontWeight.Bold)
@@ -192,12 +206,13 @@ fun SurveySection(navController: NavHostController) {
     }
 }
 
-
 // Training Program Section
 @Composable
 fun TrainingProgramSection(currentTraining: String, navController: NavHostController) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.LightGray)
     ) {
@@ -208,7 +223,9 @@ fun TrainingProgramSection(currentTraining: String, navController: NavHostContro
             Image(
                 painter = painterResource(id = R.drawable.ic_training_plan),
                 contentDescription = "Training Plan",
-                modifier = Modifier.size(150.dp).padding(bottom = 24.dp),
+                modifier = Modifier
+                    .size(150.dp)
+                    .padding(bottom = 24.dp),
                 contentScale = ContentScale.Fit
             )
             Text(text = "Training Program", fontSize = 20.sp, fontWeight = FontWeight.Bold)
@@ -230,7 +247,9 @@ fun TrainingProgramSection(currentTraining: String, navController: NavHostContro
 @Composable
 fun ProgressDashboard(currentProgress: String, navController: NavHostController) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.LightGray)
     ) {
@@ -241,7 +260,9 @@ fun ProgressDashboard(currentProgress: String, navController: NavHostController)
             Image(
                 painter = painterResource(id = R.drawable.ic_progress_dashboard),
                 contentDescription = "Progress Dashboard",
-                modifier = Modifier.size(150.dp).padding(bottom = 24.dp),
+                modifier = Modifier
+                    .size(150.dp)
+                    .padding(bottom = 24.dp),
                 contentScale = ContentScale.Fit
             )
             Text(text = "Progress Dashboard", fontSize = 20.sp, fontWeight = FontWeight.Bold)
