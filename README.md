@@ -57,3 +57,8 @@
 3. surveyviewmodel hold the user answers right now, needs to be sent to the database by next commit.
 4. UX polish required for the home page, add a nav draw/hamburg for additional features
 
+---
+
+# Commit 9
+1. Added Achievements to the app to gamify it for users
+2. Added Badges that are earned per achievement 
