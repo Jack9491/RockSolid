@@ -68,5 +68,9 @@ fun BuildNavigationGraph(
             AchievementScreen(navController, index)
         }
 
+        composable(Screen.UserDetailsScreen.route) {
+            UserDetailsScreen(navController, authViewModel)
+        }
+
     }
 }

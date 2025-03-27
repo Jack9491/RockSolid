@@ -4,6 +4,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -26,8 +28,10 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import ie.tus.rocksolid.R
 import ie.tus.rocksolid.navigation.Screen
-import kotlinx.coroutines.delay
 import ie.tus.rocksolid.viewmodel.AuthViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
 
 @Composable
 fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
@@ -35,8 +39,20 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
     val firestore = FirebaseFirestore.getInstance()
     var isFirstTimeUser by remember { mutableStateOf(false) }
     var checkCompleted by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
+    var showCoachOverlay by remember { mutableStateOf(true) }
+    var coachStep by remember { mutableStateOf(0) }
 
-    // Check Firestore to determine if the user is a first-time user
+    val coachTips = listOf(
+        "Hi I am Coach Rocky. I am your coach and general assistant to help you navigate through the app. Let's get started!",
+        "This is the User Card. Here you can see a quick view of your stats, and if you click it you can edit your details.",
+        "This is the Survey Screen. Here you will answer a survey to make the app customisable to your needs.",
+        "This is the Training Plans. Here you will view your daily training plan and complete exercises.",
+        "This is the Progress Dashboard. Here you can view all of your progress statistics and see how close your next goal is.",
+        "This is the Achievements Section. Here you can see your current achievements and your earned badges."
+    )
+
     LaunchedEffect(Unit) {
         val userId = authViewModel.getCurrentUserUid()
         if (userId != null) {
@@ -45,38 +61,34 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
                 .addOnSuccessListener { document ->
                     isFirstTimeUser = document.getBoolean("isFirstTime") ?: true
                     checkCompleted = true
-                    Log.d("HomeScreen", "isFirstTimeUser: $isFirstTimeUser")
                 }
                 .addOnFailureListener {
                     checkCompleted = true
-                    Log.d("HomeScreen", "Firestore error: ${it.message}")
                 }
-        } else {
-            checkCompleted = true
-            Log.d("HomeScreen", "User ID is null. Cannot check Firestore.")
-        }
+        } else checkCompleted = true
     }
 
-    // Navigate to the survey after a delay if it's the user's first time
     LaunchedEffect(checkCompleted, isFirstTimeUser) {
         if (checkCompleted && isFirstTimeUser) {
-            delay(30000)  // 30-second delay
-            try {
-                navController.navigate("surveyIntroductionScreen") {
-                    popUpTo("homeScreen") { inclusive = false }
-                }
-                Log.d("HomeScreen", "Navigating to Survey Introduction Screen")
-            } catch (e: Exception) {
-                Log.e("HomeScreen", "Navigation failed: ${e.message}")
+            delay(30000)
+            navController.navigate("surveyIntroductionScreen") {
+                popUpTo("homeScreen") { inclusive = false }
             }
         }
     }
 
-    Surface(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF5F5F5))
-    ) {
+    // Scroll targets based on coach tips
+    val scrollTargets = listOf(0, 0, 250, 620, 1000, 1400)
+
+    LaunchedEffect(coachStep) {
+        if (coachStep in scrollTargets.indices) {
+            coroutineScope.launch {
+                scrollState.animateScrollTo(scrollTargets[coachStep])
+            }
+        }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -84,13 +96,22 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            ProfileCard("Jack", "Intermediate", 45)
-            Spacer(modifier = Modifier.height(20.dp))
-            SurveySection(navController)
-            TrainingProgramSection("Strength & Endurance", navController)
-            ProgressDashboard("Week 1", navController)
-            Spacer(modifier = Modifier.height(24.dp))
+            val dim = showCoachOverlay && coachStep != 1
+            ProfileCard("Jack", "Intermediate", 45, {
+                navController.navigate(Screen.UserDetailsScreen.route)
+            }, dim)
 
+            Spacer(modifier = Modifier.height(20.dp))
+            SurveySection(navController, dim = showCoachOverlay && coachStep != 2)
+            TrainingProgramSection(
+                "Strength & Endurance",
+                navController,
+                dim = showCoachOverlay && coachStep != 3
+            )
+            ProgressDashboard("Week 1", navController, dim = showCoachOverlay && coachStep != 4)
+            AchievementsSection(navController, dim = showCoachOverlay && coachStep != 5)
+
+            Spacer(modifier = Modifier.height(24.dp))
             Button(
                 onClick = {
                     FirebaseAuth.getInstance().signOut()
@@ -106,34 +127,103 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
             ) {
                 Text("Logout", color = Color.White, fontSize = 16.sp)
             }
+        }
 
-            Button(
-                onClick = { navController.navigate(Screen.AchievementScreen.createRoute(0)) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
+        if (showCoachOverlay) {
+            val alignment = listOf(
+                Alignment.Center,           // Step 0
+                Alignment.CenterEnd,        // Step 1
+                Alignment.BottomStart,      // Step 2
+                Alignment.TopStart,         // Step 3
+                Alignment.TopCenter,        // Step 4
+                Alignment.TopEnd            // Step 5
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentAlignment = alignment.getOrElse(coachStep) { Alignment.Center }
             ) {
-                Text("Achievements", fontSize = 16.sp, color = Color.White)
-            }
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    val coachImage = when (coachStep) {
+                        0 -> R.drawable.coach_happy
+                        1, 2 -> R.drawable.coach_point_up
+                        3, 4, 5 -> R.drawable.coach_point_down
+                        else -> R.drawable.coach_happy
+                    }
 
+                    Image(
+                        painter = painterResource(id = coachImage),
+                        contentDescription = "Coach Rocky",
+                        modifier = Modifier.size(140.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = coachTips[coachStep],
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                TextButton(onClick = { showCoachOverlay = false }) {
+                                    Text("Skip")
+                                }
+                                Button(
+                                    onClick = {
+                                        if (coachStep == coachTips.lastIndex) {
+                                            showCoachOverlay = false
+                                        } else {
+                                            coachStep++
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(
+                                            0xFFD32F2F
+                                        )
+                                    )
+                                ) {
+                                    Text(
+                                        if (coachStep == coachTips.lastIndex) "Start Training" else "Next Tip",
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
-// ProfileCard Composable
 @Composable
-fun ProfileCard(userName: String, level: String, completedSessions: Int) {
+fun ProfileCard(userName: String, level: String, completedSessions: Int, onClick: () -> Unit, dim: Boolean = false) {
+    val alpha = if (dim) 0.3f else 1f
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp)
-            .shadow(8.dp, shape = RoundedCornerShape(12.dp)),
+            .clickable { onClick() }
+            .shadow(8.dp, shape = RoundedCornerShape(12.dp))
+            .alpha(alpha),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFD32F2F))
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Image(
                 painter = painterResource(id = R.drawable.ic_profile_pic),
                 contentDescription = "Profile Picture",
@@ -164,27 +254,29 @@ fun ProfileCard(userName: String, level: String, completedSessions: Int) {
                         tint = Color.Black
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "Sessions Completed: $completedSessions", fontSize = 14.sp, color = Color.White)
+                    Text(
+                        text = "Sessions Completed: $completedSessions",
+                        fontSize = 14.sp,
+                        color = Color.White
+                    )
                 }
             }
         }
     }
 }
 
-// User Survey Section
 @Composable
-fun SurveySection(navController: NavHostController) {
+fun SurveySection(navController: NavHostController, dim: Boolean = false) {
+    val alpha = if (dim) 0.3f else 1f
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(16.dp)
+            .alpha(alpha),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.LightGray)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Image(
                 painter = painterResource(id = R.drawable.ic_survey),
                 contentDescription = "Survey",
@@ -206,20 +298,18 @@ fun SurveySection(navController: NavHostController) {
     }
 }
 
-// Training Program Section
 @Composable
-fun TrainingProgramSection(currentTraining: String, navController: NavHostController) {
+fun TrainingProgramSection(currentTraining: String, navController: NavHostController, dim: Boolean = false) {
+    val alpha = if (dim) 0.3f else 1f
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(16.dp)
+            .alpha(alpha),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.LightGray)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Image(
                 painter = painterResource(id = R.drawable.ic_training_plan),
                 contentDescription = "Training Plan",
@@ -243,20 +333,18 @@ fun TrainingProgramSection(currentTraining: String, navController: NavHostContro
     }
 }
 
-// Progress Dashboard Section
 @Composable
-fun ProgressDashboard(currentProgress: String, navController: NavHostController) {
+fun ProgressDashboard(currentProgress: String, navController: NavHostController, dim: Boolean = false) {
+    val alpha = if (dim) 0.3f else 1f
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(16.dp)
+            .alpha(alpha),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.LightGray)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Image(
                 painter = painterResource(id = R.drawable.ic_progress_dashboard),
                 contentDescription = "Progress Dashboard",
@@ -275,6 +363,32 @@ fun ProgressDashboard(currentProgress: String, navController: NavHostController)
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
             ) {
                 Text("View Progress Dashboard", fontSize = 16.sp, color = Color.White)
+            }
+        }
+    }
+}
+
+@Composable
+fun AchievementsSection(navController: NavHostController, dim: Boolean = false) {
+    val alpha = if (dim) 0.3f else 1f
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .alpha(alpha),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.LightGray)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(text = "🏆", fontSize = 100.sp, modifier = Modifier.padding(bottom = 16.dp))
+            Text(text = "Achievements", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(
+                onClick = { navController.navigate(Screen.AchievementScreen.createRoute(0)) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
+            ) {
+                Text("View Achievements", fontSize = 16.sp, color = Color.White)
             }
         }
     }
