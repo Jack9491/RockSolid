@@ -115,7 +115,7 @@ fun NotesSection(notes: List<String>) {
     }
 }
 
-@Composable
+@Composable //intergrate with users calendar
 fun CustomCalendar(today: Int, selectedDay: Int, onDaySelected: (Int) -> Unit) {
     val daysInMonth = Calendar.getInstance().getActualMaximum(Calendar.DAY_OF_MONTH)
 

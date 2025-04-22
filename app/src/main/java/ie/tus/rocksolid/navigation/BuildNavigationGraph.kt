@@ -72,5 +72,9 @@ fun BuildNavigationGraph(
             UserDetailsScreen(navController, authViewModel)
         }
 
+        composable(Screen.NotificationScreen.route) {
+            NotificationScreen(navController)
+        }
+
     }
 }

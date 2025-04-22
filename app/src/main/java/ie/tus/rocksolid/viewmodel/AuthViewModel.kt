@@ -46,15 +46,15 @@ class AuthViewModel(
 
                     onSuccess()
 
+                    firestore.collection("Users").document(userId)
+                        .set(userData)
+                        .addOnSuccessListener {
+                            onSuccess()
+                        }
+                        .addOnFailureListener {
+                            onError("Failed to add user to Firestore: ${it.message}")
+                        }
 
-//                    firestore.collection("Users").document(userId)
-//                        .set(userData)
-//                        .addOnSuccessListener {
-//                            onSuccess()
-//                        }
-//                        .addOnFailureListener {
-//                            onError("Failed to add user to Firestore: ${it.message}")
-//                        }
                 } else {
                     Log.d("TestingScreen",  "Lol")
                     onError(task.exception?.message ?: "Registration failed")

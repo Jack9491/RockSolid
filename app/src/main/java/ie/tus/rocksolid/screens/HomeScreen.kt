@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QuerySnapshot
 import ie.tus.rocksolid.R
 import ie.tus.rocksolid.navigation.Screen
 import ie.tus.rocksolid.viewmodel.AuthViewModel
@@ -53,6 +54,10 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
         "This is the Achievements Section. Here you can see your current achievements and your earned badges."
     )
 
+    var userName by remember { mutableStateOf("--") }
+    var userLevel by remember { mutableStateOf("--") }
+    var completedSessions by remember { mutableStateOf(0) }
+
     LaunchedEffect(Unit) {
         val userId = authViewModel.getCurrentUserUid()
         if (userId != null) {
@@ -61,6 +66,16 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
                 .addOnSuccessListener { document ->
                     isFirstTimeUser = document.getBoolean("isFirstTime") ?: true
                     checkCompleted = true
+                    userName = document.getString("name") ?: "--"
+                    userLevel = document.getString("level") ?: "--"
+                }
+                // Count user's progress sessions
+            val userRef = firestore.collection("Users").document(userId)
+            firestore.collection("Progress")
+                .whereEqualTo("uid", userRef)
+                .get()
+                .addOnSuccessListener { querySnapshot ->
+                    completedSessions = querySnapshot.size()
                 }
                 .addOnFailureListener {
                     checkCompleted = true
@@ -68,14 +83,15 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
         } else checkCompleted = true
     }
 
-    LaunchedEffect(checkCompleted, isFirstTimeUser) {
-        if (checkCompleted && isFirstTimeUser) {
-            delay(30000)
-            navController.navigate("surveyIntroductionScreen") {
-                popUpTo("homeScreen") { inclusive = false }
-            }
-        }
-    }
+    // launch after rocky finishes (either skip button or training)
+//    LaunchedEffect(checkCompleted, isFirstTimeUser) {
+//        if (checkCompleted && isFirstTimeUser) {
+//            delay(30000)
+//            navController.navigate("surveyIntroductionScreen") {
+//                popUpTo("homeScreen") { inclusive = false }
+//            }
+//        }
+//    }
 
     // Scroll targets based on coach tips
     val scrollTargets = listOf(0, 0, 250, 620, 1000, 1400)
@@ -97,9 +113,14 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             val dim = showCoachOverlay && coachStep != 1
-            ProfileCard("Jack", "Intermediate", 45, {
-                navController.navigate(Screen.UserDetailsScreen.route)
-            }, dim)
+            ProfileCard(
+                userName = userName,
+                level = userLevel,
+                completedSessions = completedSessions,
+                onClick = { navController.navigate(Screen.UserDetailsScreen.route) },
+                dim = dim,
+                navController = navController
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
             SurveySection(navController, dim = showCoachOverlay && coachStep != 2)
@@ -211,7 +232,7 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
 }
 
 @Composable
-fun ProfileCard(userName: String, level: String, completedSessions: Int, onClick: () -> Unit, dim: Boolean = false) {
+fun ProfileCard(userName: String, level: String, completedSessions: Int, onClick: () -> Unit, dim: Boolean = false, navController: NavHostController) {
     val alpha = if (dim) 0.3f else 1f
     Card(
         modifier = Modifier
@@ -223,47 +244,64 @@ fun ProfileCard(userName: String, level: String, completedSessions: Int, onClick
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFD32F2F))
     ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_profile_pic),
-                contentDescription = "Profile Picture",
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(50))
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column {
-                Text(text = userName, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_level),
-                        contentDescription = "Level Icon",
-                        modifier = Modifier.size(18.dp),
-                        tint = Color.Black
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "Level: $level", fontSize = 16.sp, color = Color.White)
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_profile_pic),
+                    contentDescription = "Profile Picture",
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(50))
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text(text = userName, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_level),
+                            contentDescription = "Level Icon",
+                            modifier = Modifier.size(18.dp),
+                            tint = Color.Black
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = "Level: $level", fontSize = 16.sp, color = Color.White)
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_routes),
+                            contentDescription = "Routes Icon",
+                            modifier = Modifier.size(18.dp),
+                            tint = Color.Black
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Sessions Completed: $completedSessions",
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_routes),
-                        contentDescription = "Routes Icon",
-                        modifier = Modifier.size(18.dp),
-                        tint = Color.Black
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Sessions Completed: $completedSessions",
-                        fontSize = 14.sp,
-                        color = Color.White
-                    )
-                }
+            }
+            IconButton(
+                onClick = { navController.navigate(Screen.NotificationScreen.route) }
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_notification),
+                    contentDescription = "Notifications",
+                    tint = Color.White,
+                    modifier = Modifier.size(60.dp)
+                )
             }
         }
     }
 }
+
 
 @Composable
 fun SurveySection(navController: NavHostController, dim: Boolean = false) {
