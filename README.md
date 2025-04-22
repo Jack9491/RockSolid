@@ -61,4 +61,11 @@
 
 # Commit 9
 1. Added Achievements to the app to gamify it for users
-2. Added Badges that are earned per achievement 
+2. Added Badges that are earned per achievement
+
+---
+
+# Commit 10
+1. Swapped out dummy data with real data in profile card
+2. Edit details now works and is prepopulated
+3. Profile pic is work in progress
