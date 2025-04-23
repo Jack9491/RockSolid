@@ -76,3 +76,11 @@
 1. Signup validation and error handling added, no duplicate accounts allowed, passwords must meet security requirements
 2. Sign in only allows valid details, and no duplicates
 3. UX improvement for error messages and password building
+
+---
+
+# Commit 12: 
+1. FirstTimeUser now is fucntional and is set when surveys are complete
+2. Coach Rocky Tutorial screen only appears for a first time user
+3. Survey screen automatically flows after the tutorial so the user data is taken
+4. Db sucessdfully being filled in the SurveyAnswers table allowing data to be used by the ML Model.
