@@ -44,6 +44,14 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
     val scrollState = rememberScrollState()
     var showCoachOverlay by remember { mutableStateOf(true) }
     var coachStep by remember { mutableStateOf(0) }
+    val refreshKey = remember { mutableStateOf(System.currentTimeMillis()) }
+    val currentBackStackEntry = navController.currentBackStackEntry
+    val savedStateHandle = currentBackStackEntry?.savedStateHandle
+
+    LaunchedEffect(savedStateHandle?.get<Boolean>("refreshHome")) {
+        savedStateHandle?.remove<Boolean>("refreshHome")
+        refreshKey.value = System.currentTimeMillis()
+    }
 
     val coachTips = listOf(
         "Hi I am Coach Rocky. I am your coach and general assistant to help you navigate through the app. Let's get started!",
@@ -58,18 +66,31 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
     var userLevel by remember { mutableStateOf("--") }
     var completedSessions by remember { mutableStateOf(0) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(refreshKey.value) {
         val userId = authViewModel.getCurrentUserUid()
         if (userId != null) {
             firestore.collection("Users").document(userId)
-                .get()
-                .addOnSuccessListener { document ->
-                    isFirstTimeUser = document.getBoolean("isFirstTime") ?: true
-                    checkCompleted = true
-                    userName = document.getString("name") ?: "--"
-                    userLevel = document.getString("level") ?: "--"
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        checkCompleted = true
+                        return@addSnapshotListener
+                    }
+
+                    if (snapshot != null && snapshot.exists()) {
+                        val firstTime = snapshot.getBoolean("isFirstTime") ?: true
+                        isFirstTimeUser = firstTime
+                        userName = snapshot.getString("name") ?: "--"
+                        userLevel = snapshot.getString("level") ?: "--"
+                        checkCompleted = true
+
+                        // NEW: Automatically disable tutorial if user is not first time
+                        if (!firstTime) {
+                            showCoachOverlay = false
+                        }
+                    }
                 }
-                // Count user's progress sessions
+
+            // Progress (unchanged)
             val userRef = firestore.collection("Users").document(userId)
             firestore.collection("Progress")
                 .whereEqualTo("uid", userRef)
@@ -80,8 +101,12 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
                 .addOnFailureListener {
                     checkCompleted = true
                 }
-        } else checkCompleted = true
+        } else {
+            checkCompleted = true
+        }
     }
+
+
 
     // launch after rocky finishes (either skip button or training)
 //    LaunchedEffect(checkCompleted, isFirstTimeUser) {
@@ -150,7 +175,7 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
             }
         }
 
-        if (showCoachOverlay) {
+        if (showCoachOverlay && isFirstTimeUser) {
             val alignment = listOf(
                 Alignment.Center,           // Step 0
                 Alignment.CenterEnd,        // Step 1
@@ -200,22 +225,26 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                TextButton(onClick = { showCoachOverlay = false }) {
+                                TextButton(onClick = {
+                                    showCoachOverlay = false
+                                    navController.navigate("surveyIntroductionScreen") {
+                                        popUpTo("homeScreen") { inclusive = true }
+                                    }
+                                }) {
                                     Text("Skip")
                                 }
                                 Button(
                                     onClick = {
                                         if (coachStep == coachTips.lastIndex) {
                                             showCoachOverlay = false
+                                            navController.navigate("surveyIntroductionScreen") {
+                                                popUpTo("homeScreen") { inclusive = true }
+                                            }
                                         } else {
                                             coachStep++
                                         }
                                     },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(
-                                            0xFFD32F2F
-                                        )
-                                    )
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
                                 ) {
                                     Text(
                                         if (coachStep == coachTips.lastIndex) "Start Training" else "Next Tip",

@@ -54,7 +54,7 @@ fun UserDetailsScreen(navController: NavHostController, authViewModel: AuthViewM
                 val doc = firestore.collection("Users").document(uid).get().await()
                 name = doc.getString("name") ?: ""
                 email = doc.getString("email") ?: ""
-                password = doc.getString("password") ?: ""
+                //password = doc.getString("password") ?: ""
                 height = doc.get("height")?.toString() ?: ""
                 weight = doc.get("weight")?.toString() ?: ""
                 // Simulated profilePic logic – real implementation would load from URL or storage
@@ -140,14 +140,14 @@ fun UserDetailsScreen(navController: NavHostController, authViewModel: AuthViewM
                             colors = whiteFieldColors
                         )
 
-                        OutlinedTextField(
-                            value = password,
-                            onValueChange = { password = it },
-                            label = { Text("Password") },
-                            visualTransformation = PasswordVisualTransformation(),
-                            modifier = textFieldModifier,
-                            colors = whiteFieldColors
-                        )
+//                        OutlinedTextField(
+//                            value = password,
+//                            onValueChange = { password = it },
+//                            label = { Text("Password") },
+//                            visualTransformation = PasswordVisualTransformation(),
+//                            modifier = textFieldModifier,
+//                            colors = whiteFieldColors
+//                        )
 
                         OutlinedTextField(
                             value = height,
@@ -173,7 +173,7 @@ fun UserDetailsScreen(navController: NavHostController, authViewModel: AuthViewM
                                     val updatedData = mapOf(
                                         "name" to name,
                                         "email" to email,
-                                        "password" to password,
+                                        //"password" to password,
                                         "height" to height.toIntOrNull(),
                                         "weight" to weight.toIntOrNull()
                                     )

@@ -30,6 +30,10 @@ fun LoginScreen(
     val isLoading = remember { mutableStateOf(false) }
     val loginError = remember { mutableStateOf("") }
 
+    val showResetDialog = remember { mutableStateOf(false) }
+    val resetEmail = remember { mutableStateOf("") }
+    val resetMessage = remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -99,6 +103,63 @@ fun LoginScreen(
             } else {
                 Text("Login", fontSize = 16.sp)
             }
+        }
+
+        TextButton(
+            onClick = { showResetDialog.value = true },
+            modifier = Modifier.align(Alignment.End)
+        ) {
+            Text("Forgot Password?", color = Color.Gray)
+        }
+
+        if (showResetDialog.value) {
+            AlertDialog(
+                onDismissRequest = { showResetDialog.value = false },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            if (resetEmail.value.isBlank()) {
+                                resetMessage.value = "Email cannot be empty"
+                                return@TextButton
+                            }
+                            authViewModel.sendPasswordReset(
+                                resetEmail.value,
+                                onSuccess = {
+                                    resetMessage.value = "Reset email sent successfully!"
+                                },
+                                onError = {
+                                    resetMessage.value = "Failed: $it"
+                                }
+                            )
+                        }
+                    ) {
+                        Text("Send Reset Email")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showResetDialog.value = false }) {
+                        Text("Cancel")
+                    }
+                },
+                title = { Text("Reset Password") },
+                text = {
+                    Column {
+                        OutlinedTextField(
+                            value = resetEmail.value,
+                            onValueChange = { resetEmail.value = it },
+                            label = { Text("Enter your email") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        if (resetMessage.value.isNotBlank()) {
+                            Text(
+                                text = resetMessage.value,
+                                color = if (resetMessage.value.startsWith("Reset")) Color.Green else Color.Red,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
+                        }
+                    }
+                }
+            )
         }
     }
 }

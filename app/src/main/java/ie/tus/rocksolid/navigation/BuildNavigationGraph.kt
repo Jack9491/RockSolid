@@ -52,7 +52,7 @@ fun BuildNavigationGraph(
         composable(Screen.TrainingProgramScreen.route) { TrainingProgramScreen(navController) }
         composable(Screen.ProgressDashboardScreen.route) { ProgressDashboardScreen(navController) }
 
-        composable(Screen.QuickSetupScreen.route) { QuickSetupScreen(navController) }
+        composable(Screen.QuickSetupScreen.route) { QuickSetupScreen(navController, authViewModel) }
         composable(Screen.TailoredSetupSection1.route) { TailoredSetupSection1(navController, surveyViewModel) }
         composable(Screen.TailoredSetupSection2.route) { TailoredSetupSection2(navController, surveyViewModel) }
         composable(Screen.TailoredSetupSection3.route) { TailoredSetupSection3(navController, surveyViewModel) }

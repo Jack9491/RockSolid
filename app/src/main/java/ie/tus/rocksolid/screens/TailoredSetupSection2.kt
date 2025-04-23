@@ -17,6 +17,7 @@ import ie.tus.rocksolid.viewmodel.SurveyViewModel
 @Composable
 fun TailoredSetupSection2(navController: NavController, surveyViewModel: SurveyViewModel) {
     var questionIndex by remember { mutableStateOf(0) }
+    val selectedGoals = remember { mutableStateListOf<String>() }
 
     val questions = listOf(
         "What are your primary climbing goals? (Select all that apply)" to listOf(
@@ -70,33 +71,73 @@ fun TailoredSetupSection2(navController: NavController, surveyViewModel: SurveyV
                     modifier = Modifier.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    val currentQuestion = questions[questionIndex]
+
                     Text(
-                        text = questions[questionIndex].first,
+                        text = currentQuestion.first,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black,
                         modifier = Modifier.padding(bottom = 24.dp)
                     )
 
-                    questions[questionIndex].second.forEachIndexed { index, answer ->
+                    currentQuestion.second.forEachIndexed { index, answer ->
                         val buttonColor = if (index < buttonColors.size) buttonColors[index] else Color(0xFFC62828)
+
+                        if (questionIndex == 0) {
+                            // Multi-select for goals
+                            val isSelected = selectedGoals.contains(answer)
+
+                            Button(
+                                onClick = {
+                                    if (isSelected) {
+                                        selectedGoals.remove(answer)
+                                    } else {
+                                        selectedGoals.add(answer)
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .height(60.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isSelected) Color.Gray else buttonColor
+                                )
+                            ) {
+                                Text(answer, fontSize = 16.sp, color = Color.White)
+                            }
+                        } else {
+                            // Single select for climbing style
+                            Button(
+                                onClick = {
+                                    surveyViewModel.saveResponse(4, answer)
+                                    navController.navigate("tailoredSetupSection3")
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp)
+                                    .height(60.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = buttonColor)
+                            ) {
+                                Text(answer, fontSize = 16.sp, color = Color.White)
+                            }
+                        }
+                    }
+
+                    if (questionIndex == 0) {
                         Button(
                             onClick = {
-                                surveyViewModel.saveResponse(questionIndex + 3, answer)  // Offset for section 2
-                                if (questionIndex < questions.size - 1) {
-                                    questionIndex++
-                                } else {
-                                    navController.navigate("tailoredSetupSection3")
-                                }
+                                surveyViewModel.saveResponse(3, selectedGoals.joinToString(", "))
+                                questionIndex++
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 8.dp)
-                                .height(60.dp),
-                            shape = RoundedCornerShape(10.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = buttonColor)
+                                .padding(top = 16.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
                         ) {
-                            Text(answer, fontSize = 16.sp, color = Color.White)
+                            Text("Continue", color = Color.White)
                         }
                     }
 
@@ -112,4 +153,3 @@ fun TailoredSetupSection2(navController: NavController, surveyViewModel: SurveyV
         }
     }
 }
-

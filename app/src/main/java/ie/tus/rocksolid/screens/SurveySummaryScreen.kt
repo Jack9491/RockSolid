@@ -9,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FirebaseFirestore
 import ie.tus.rocksolid.viewmodel.AuthViewModel
 import ie.tus.rocksolid.viewmodel.SurveyViewModel
 
@@ -20,7 +22,7 @@ fun SurveySummaryScreen(
     authViewModel: AuthViewModel,
     surveyViewModel: SurveyViewModel
 ) {
-    val responses = surveyViewModel.responses.value  // Get the current responses map
+    val responses = surveyViewModel.responses.value
 
     Scaffold(
         topBar = {
@@ -67,19 +69,66 @@ fun SurveySummaryScreen(
 
             Button(
                 onClick = {
-                    val userId = authViewModel.getCurrentUserUid() ?: ""
-                    authViewModel.markSurveyComplete(
-                        userId = userId,
-                        onSuccess = {
-                            Log.d("SurveySummary", "Survey marked as complete. Navigating to home.")
-                            navController.navigate("homeScreen") {
-                                popUpTo("homeScreen") { inclusive = true }
-                            }
-                        },
-                        onError = { error ->
-                            Log.d("SurveySummary", "Error updating Firestore: $error")
-                        }
+                    val uid = authViewModel.getCurrentUserUid() ?: return@Button
+                    val db = FirebaseFirestore.getInstance()
+
+                    val fullLevel = responses[1] ?: ""
+                    val extractedLevel = fullLevel
+                        .substringAfterLast("(")
+                        .removeSuffix(")")
+                        .trim()
+
+                    val data = mapOf(
+                        "uid" to uid,
+                        "experienceLevel" to (responses[0] ?: ""),
+                        "level" to fullLevel,
+                        "climbingFrequency" to (responses[2] ?: ""),
+                        "trainingGoals" to (responses[3]?.split(", ") ?: listOf()),
+                        "preferredStyle" to (responses[4] ?: ""),
+                        "fitnessLevel" to (responses[5] ?: ""),
+                        "injuries" to (responses[6] ?: ""),
+                        "trainingDaysPerWeek" to (responses[7] ?: ""),
+                        "includeCrossTraining" to ((responses[8] ?: "") == "Yes"),
+                        "surveyType" to "Tailored",
+                        "submittedAt" to Timestamp.now()
                     )
+
+                    db.collection("SurveyAnswers").document(uid)
+                        .set(data)
+                        .addOnSuccessListener {
+                            Log.d("Survey", "Survey answers saved for user: $uid")
+
+                            // Step 1: Update user's level field
+                            db.collection("Users").document(uid)
+                                .update("level", extractedLevel)
+                                .addOnSuccessListener {
+                                    Log.d("Survey", "User level updated to $extractedLevel")
+                                }
+                                .addOnFailureListener {
+                                    Log.e("Survey", "Failed to update user level: ${it.message}")
+                                }
+
+                            // Step 2: Mark isFirstTime = false in Users table
+                            authViewModel.markSurveyComplete(
+                                userId = uid,
+                                onSuccess = {
+                                    Log.d("Survey", "isFirstTime updated to false")
+
+                                    // Step 3: Navigate back to home
+                                    navController.currentBackStackEntry?.savedStateHandle?.set("refreshHome", true)
+                                    navController.navigate("homeScreen") {
+                                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                },
+                                onError = { error ->
+                                    Log.e("Survey", "Failed to update isFirstTime: $error")
+                                }
+                            )
+                        }
+                        .addOnFailureListener {
+                            Log.e("Survey", "Error writing survey: ${it.message}")
+                        }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))

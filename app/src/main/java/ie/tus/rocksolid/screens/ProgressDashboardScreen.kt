@@ -184,26 +184,6 @@ fun ProgressDashboardScreen(navController: NavHostController) {
                 }
             }
         }
-
-        // Footer Section: Quick Links
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = { /* TODO Navigate to training logs */ },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
-            ) {
-                Text("View Training Logs", fontWeight = FontWeight.Bold, color = Color.White)
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(
-                onClick = { /* TODO Navigate to historical data */ },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
-            ) {
-                Text("View Historical Data", fontWeight = FontWeight.Bold, color = Color.White)
-            }
-        }
     }
 }
 

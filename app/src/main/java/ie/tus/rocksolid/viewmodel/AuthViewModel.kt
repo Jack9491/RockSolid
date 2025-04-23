@@ -9,7 +9,6 @@ class AuthViewModel(
     private val firebaseAuth: FirebaseAuth
 ) : ViewModel() {
 
-    // Login function with callbacks for success and error
     fun login(email: String, password: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         firebaseAuth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
@@ -21,7 +20,6 @@ class AuthViewModel(
             }
     }
 
-    // Register function with Firestore integration to store user details
     fun register(
         email: String,
         password: String,
@@ -34,7 +32,6 @@ class AuthViewModel(
         firebaseAuth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    Log.d("TestingScreen",  "Entered is successful")
                     val userId = firebaseAuth.currentUser?.uid ?: "1000"
                     val userData = mapOf(
                         "email" to email,
@@ -42,27 +39,33 @@ class AuthViewModel(
                         "uid" to userId,
                         "isFirstTime" to true
                     )
-                    //customerService.addCustomer(userData)
-
-                    onSuccess()
 
                     firestore.collection("Users").document(userId)
                         .set(userData)
-                        .addOnSuccessListener {
-                            onSuccess()
-                        }
-                        .addOnFailureListener {
-                            onError("Failed to add user to Firestore: ${it.message}")
-                        }
+                        .addOnSuccessListener { onSuccess() }
+                        .addOnFailureListener { onError("Failed to add user to Firestore: ${it.message}") }
 
                 } else {
-                    Log.d("TestingScreen",  "Lol")
                     onError(task.exception?.message ?: "Registration failed")
                 }
             }
     }
 
-    // Get the current user's UID (if logged in)
+    fun sendPasswordReset(
+        email: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        firebaseAuth.sendPasswordResetEmail(email)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onSuccess()
+                } else {
+                    onError(task.exception?.message ?: "Reset failed")
+                }
+            }
+    }
+
     fun getCurrentUserUid(): String? {
         return firebaseAuth.currentUser?.uid
     }
@@ -74,5 +77,4 @@ class AuthViewModel(
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { error -> onError(error.message ?: "Failed to update Firestore") }
     }
-
 }
