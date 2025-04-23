@@ -15,8 +15,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import ie.tus.rocksolid.R
 import ie.tus.rocksolid.viewmodel.AuthViewModel
 
@@ -30,6 +28,7 @@ fun LoginScreen(
     val email = remember { mutableStateOf("") }
     val password = remember { mutableStateOf("") }
     val isLoading = remember { mutableStateOf(false) }
+    val loginError = remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -68,24 +67,23 @@ fun LoginScreen(
             shape = RoundedCornerShape(8.dp)
         )
 
+        if (loginError.value.isNotBlank()) {
+            Text(text = loginError.value, color = Color.Red, modifier = Modifier.padding(8.dp))
+        }
+
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
             onClick = {
                 isLoading.value = true
+                loginError.value = ""
                 authViewModel.login(
                     email = email.value,
                     password = password.value,
-                    onSuccess = {
-                        onLoginSuccess()
-//                        navController.navigate("homeScreen") {
-//                            popUpTo("loginScreen") { inclusive = true }
-//                        }
-//                        isLoading.value = false
-                    },
+                    onSuccess = { onLoginSuccess() },
                     onError = { error ->
                         isLoading.value = false
-                        Log.d("LoginScreen", "Login failed: $error")
+                        loginError.value = error
                     }
                 )
             },

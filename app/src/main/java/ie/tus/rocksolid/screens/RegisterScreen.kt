@@ -1,6 +1,7 @@
 package ie.tus.rocksolid.screens
 
 import android.util.Log
+import android.util.Patterns
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import ie.tus.rocksolid.R
+import ie.tus.rocksolid.utils.PasswordValidator
 import ie.tus.rocksolid.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,6 +34,7 @@ fun RegisterScreen(
     val password = remember { mutableStateOf("") }
     val confirmPassword = remember { mutableStateOf("") }
     val isLoading = remember { mutableStateOf(false) }
+    val errorMessage = remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -92,29 +95,58 @@ fun RegisterScreen(
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 24.dp),
+                .padding(bottom = 8.dp),
             shape = RoundedCornerShape(12.dp)
         )
 
+        val passwordCriteria = PasswordValidator.getValidationState(password.value)
+        Column(modifier = Modifier.fillMaxWidth()) {
+            passwordCriteria.forEach { (criteria, met) ->
+                Text(
+                    text = "${if (met) "✔" else "❌"} $criteria",
+                    color = if (met) Color.Green else Color.Red,
+                    fontSize = 12.sp
+                )
+            }
+        }
+
+        if (errorMessage.value.isNotBlank()) {
+            Text(text = errorMessage.value, color = Color.Red, modifier = Modifier.padding(8.dp))
+        }
+
         Button(
             onClick = {
-                if (password.value == confirmPassword.value) {
-                    isLoading.value = true
-                    authViewModel.register(
-                        name = name.value,
-                        email = email.value,
-                        password = password.value,
-                        onSuccess = {
-                            onRegisterSuccess()
-                        },
-                        onError = { error ->
-                            isLoading.value = false
-                            Log.d("RegisterScreen", "Registration failed: $error")
-                        }
-                    )
-                } else {
-                    Log.d("RegisterScreen", "Passwords do not match")
+                if (name.value.isBlank() || email.value.isBlank() || password.value.isBlank() || confirmPassword.value.isBlank()) {
+                    errorMessage.value = "All fields are required."
+                    return@Button
                 }
+
+                if (!Patterns.EMAIL_ADDRESS.matcher(email.value).matches()) {
+                    errorMessage.value = "Invalid email address."
+                    return@Button
+                }
+
+                if (!PasswordValidator.isValid(password.value)) {
+                    errorMessage.value = "Password does not meet requirements."
+                    return@Button
+                }
+
+                if (password.value != confirmPassword.value) {
+                    errorMessage.value = "Passwords do not match."
+                    return@Button
+                }
+
+                isLoading.value = true
+                authViewModel.register(
+                    name = name.value,
+                    email = email.value,
+                    password = password.value,
+                    onSuccess = { onRegisterSuccess() },
+                    onError = { error ->
+                        isLoading.value = false
+                        errorMessage.value = error
+                    }
+                )
             },
             modifier = Modifier
                 .fillMaxWidth()

@@ -28,6 +28,8 @@ import ie.tus.rocksolid.R
 import ie.tus.rocksolid.viewmodel.AuthViewModel
 import kotlinx.coroutines.tasks.await
 
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserDetailsScreen(navController: NavHostController, authViewModel: AuthViewModel) {
