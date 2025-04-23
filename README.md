@@ -69,3 +69,10 @@
 1. Swapped out dummy data with real data in profile card
 2. Edit details now works and is prepopulated
 3. Profile pic is work in progress
+
+---
+
+# Commit 11
+1. Signup validation and error handling added, no duplicate accounts allowed, passwords must meet security requirements
+2. Sign in only allows valid details, and no duplicates
+3. UX improvement for error messages and password building
