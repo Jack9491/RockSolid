@@ -7,6 +7,9 @@ sealed class Screen(val route: String) {
     object RegisterScreen: Screen("registerScreen")
     object HomeScreen: Screen("homeScreen")
     object TrainingProgramScreen: Screen("trainingProgramScreen")
+    object ExerciseScreen : Screen("exercise/{day}/{weekStart}") {
+        fun passArgs(day: String, weekStart: String) = "exercise/$day/$weekStart"
+    }
     object ProgressDashboardScreen: Screen("progressDashboardScreen")
     object SurveyIntroductionScreen : Screen("surveyIntroductionScreen")
     object QuickSetupScreen : Screen("quickSetupScreen")
@@ -30,6 +33,7 @@ val screens = listOf(
     Screen.RegisterScreen,
     Screen.HomeScreen,
     Screen.TrainingProgramScreen,
+    Screen.ExerciseScreen,
     Screen.ProgressDashboardScreen,
     Screen.SurveyIntroductionScreen,
     Screen.QuickSetupScreen,

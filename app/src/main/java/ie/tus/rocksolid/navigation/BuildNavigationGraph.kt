@@ -3,9 +3,11 @@ package ie.tus.rocksolid.navigation
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.google.firebase.auth.FirebaseAuth
 import ie.tus.rocksolid.screens.*
 import ie.tus.rocksolid.screens.tailoredsetup.TailoredSetupSection1
@@ -50,6 +52,20 @@ fun BuildNavigationGraph(
 
         composable(Screen.SurveyIntroductionScreen.route) { SurveyIntroductionScreen(navController) }
         composable(Screen.TrainingProgramScreen.route) { TrainingProgramScreen(navController) }
+
+        composable(
+            route = "exercise/{day}/{weekStart}",
+            arguments = listOf(
+                navArgument("day") { type = NavType.StringType },
+                navArgument("weekStart") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val day = backStackEntry.arguments?.getString("day") ?: return@composable
+            val weekStart = backStackEntry.arguments?.getString("weekStart") ?: return@composable
+            ExerciseScreen(day = day, weekStart = weekStart, navController = navController)
+        }
+
+
         composable(Screen.ProgressDashboardScreen.route) { ProgressDashboardScreen(navController) }
 
         composable(Screen.QuickSetupScreen.route) { QuickSetupScreen(navController, authViewModel) }
