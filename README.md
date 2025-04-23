@@ -84,3 +84,10 @@
 2. Coach Rocky Tutorial screen only appears for a first time user
 3. Survey screen automatically flows after the tutorial so the user data is taken
 4. Db sucessdfully being filled in the SurveyAnswers table allowing data to be used by the ML Model.
+
+---
+
+# Commit 13:
+1. Training Programs are now generated based on user survey selections
+2. Exercise screen added as a workout area
+3. UX enhancements needed
