@@ -42,29 +42,35 @@ object TrainingPlanGenerator {
             }
 
             val level = surveySnapshot.getString("experienceLevel") ?: "Beginner"
-            val goals = surveySnapshot.get("trainingGoals") as? List<String> ?: emptyList()
+            val rawGoals = surveySnapshot.get("trainingGoals") as? List<String> ?: emptyList()
+            val goals = if (rawGoals.isEmpty()) listOf("General fitness and health") else rawGoals
 
             Log.d("TRAINING_GEN", "Survey found. Level=$level, Goals=$goals")
 
-            // 🔁 Map survey values to tags
-            val levelTag = when (level.lowercase()) {
-                "1 year or less", "beginner" -> "Beginner"
-                "2+ years" -> "Intermediate"
-                else -> "Intermediate"
+            // Map survey values to tags
+            val levelTag = when {
+                level.contains("Beginner", ignoreCase = true) -> "Beginner"
+                level.contains("Intermediate", ignoreCase = true) -> "Intermediate"
+                level.contains("Advanced", ignoreCase = true) -> "Advanced"
+                else -> "Beginner"
             }
+
 
             val goalTags = goals.flatMap {
                 when (it.lowercase()) {
                     "build power and strength" -> listOf("Strength", "Power")
                     "enhance core strength and body tension" -> listOf("Core", "Stability")
                     "increase finger strength" -> listOf("Finger", "Grip")
+                    "improve overall endurance" -> listOf("Endurance", "Aerobic")
+                    "general fitness and health" -> listOf("Endurance", "Stability", "Core")
                     else -> emptyList()
                 }
             }
 
             Log.d("TRAINING_GEN", "Mapped level=$levelTag, goalTags=$goalTags")
 
-            // 🔍 Filter matching exercises
+            // Filter matching exercises
+
             val exerciseSnapshots = db.collection("Exercises").get().await()
             val matchingExercises = exerciseSnapshots.documents.filter { doc ->
                 val difficulty = doc.getString("difficulty") ?: ""

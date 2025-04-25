@@ -1,10 +1,11 @@
 package ie.tus.rocksolid.screens
 
-import androidx.compose.foundation.layout.*
+import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -13,17 +14,54 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import ie.tus.rocksolid.R
+import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun ProgressDashboardScreen(navController: NavHostController) {
+    val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+    val db = FirebaseFirestore.getInstance()
+    var totalSessions by remember { mutableIntStateOf(0) }
+    var totalExercises by remember { mutableIntStateOf(0) }
+    var thisWeekExercises by remember { mutableIntStateOf(0) }
+
+    // Load from Firestore
+    LaunchedEffect(uid) {
+        val progressDocs = db.collection("Progress")
+            .whereEqualTo("uid", uid)
+            .get()
+            .await()
+
+        totalSessions = progressDocs.size()
+        totalExercises = progressDocs.documents.sumOf {
+            val exercises = it.get("exercises") as? List<Map<String, Any>> ?: emptyList()
+            exercises.count { ex -> (ex["status"] == "completed" || ex["status"] == "partial") }
+        }
+
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val cal = Calendar.getInstance().apply {
+            set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+        }
+        val mondayDate = sdf.format(cal.time)
+
+        thisWeekExercises = progressDocs.documents.filter {
+            it.getString("weekStart") == mondayDate
+        }.sumOf {
+            val exercises = it.get("exercises") as? List<Map<String, Any>> ?: emptyList()
+            exercises.count { ex -> (ex["status"] == "completed" || ex["status"] == "partial") }
+        }
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
-            .background(Color(0xFFF5F5F5)) // Light background for readability
+            .background(Color(0xFFF5F5F5))
     ) {
-        // Back Button
         item {
             Button(
                 onClick = { navController.popBackStack() },
@@ -34,7 +72,6 @@ fun ProgressDashboardScreen(navController: NavHostController) {
             }
         }
 
-        // Header Section
         item {
             Card(
                 modifier = Modifier
@@ -51,7 +88,6 @@ fun ProgressDashboardScreen(navController: NavHostController) {
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Total Routes
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_routes),
@@ -60,14 +96,9 @@ fun ProgressDashboardScreen(navController: NavHostController) {
                             tint = Color.Black
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Total Routes: 120",
-                            fontSize = 16.sp,
-                            color = Color.White
-                        )
+                        Text("Total Exercises: $totalExercises", fontSize = 16.sp, color = Color.White)
                     }
 
-                    // Hardest Grade
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_level),
@@ -76,14 +107,9 @@ fun ProgressDashboardScreen(navController: NavHostController) {
                             tint = Color.Black
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Hardest Grade: V5",
-                            fontSize = 16.sp,
-                            color = Color.White
-                        )
+                        Text("Hardest Grade: V5", fontSize = 16.sp, color = Color.White) // Placeholder
                     }
 
-                    // Completed Sessions
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_completed),
@@ -92,17 +118,12 @@ fun ProgressDashboardScreen(navController: NavHostController) {
                             tint = Color.Black
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Sessions Completed: 34",
-                            fontSize = 16.sp,
-                            color = Color.White
-                        )
+                        Text("Sessions Completed: $totalSessions", fontSize = 16.sp, color = Color.White)
                     }
                 }
             }
         }
 
-        // Progress Charts Section
         item {
             SectionHeader(title = "Progress Charts")
             Card(
@@ -114,8 +135,6 @@ fun ProgressDashboardScreen(navController: NavHostController) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Routes Climbed Over Time", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     Spacer(modifier = Modifier.height(8.dp))
-                    // Placeholder for chart visualization
-                    // TODO apply real data
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -129,9 +148,8 @@ fun ProgressDashboardScreen(navController: NavHostController) {
             }
         }
 
-        // Personal Bests Section
         item {
-            SectionHeader(title = "Personal Bests")
+            SectionHeader(title = "Personal Bests") //can get this from survey
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -146,7 +164,6 @@ fun ProgressDashboardScreen(navController: NavHostController) {
             }
         }
 
-        // Weekly/Monthly Summary Section
         item {
             SectionHeader(title = "Weekly Summary")
             Card(
@@ -156,13 +173,12 @@ fun ProgressDashboardScreen(navController: NavHostController) {
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Routes Climbed: 25", fontSize = 16.sp)
-                    Text("Total Training Time: 8 hours", fontSize = 16.sp)
+                    Text("Routes Climbed: $thisWeekExercises", fontSize = 16.sp)
+                    Text("Total Training Time: 8 hours", fontSize = 16.sp) // Placeholder
                 }
             }
         }
 
-        // Goal Progress Section
         item {
             SectionHeader(title = "Goal Progress")
             Card(
@@ -175,7 +191,7 @@ fun ProgressDashboardScreen(navController: NavHostController) {
                     Text("Goal: Climb V6", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
                     LinearProgressIndicator(
-                        progress = 0.7f,
+                        progress = { 0.7f },
                         modifier = Modifier.fillMaxWidth(),
                         color = Color(0xFFD32F2F)
                     )

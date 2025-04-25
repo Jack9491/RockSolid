@@ -32,6 +32,10 @@ import ie.tus.rocksolid.navigation.Screen
 import ie.tus.rocksolid.viewmodel.AuthViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+import coil.compose.rememberAsyncImagePainter
 
 
 @Composable
@@ -47,6 +51,10 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
     val refreshKey = remember { mutableStateOf(System.currentTimeMillis()) }
     val currentBackStackEntry = navController.currentBackStackEntry
     val savedStateHandle = currentBackStackEntry?.savedStateHandle
+
+    // state variables for real data
+    var trainingFocus by remember { mutableStateOf("Loading...") }
+    var trainingWeekLabel by remember { mutableStateOf("Loading...") }
 
     LaunchedEffect(savedStateHandle?.get<Boolean>("refreshHome")) {
         savedStateHandle?.remove<Boolean>("refreshHome")
@@ -65,60 +73,97 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
     var userName by remember { mutableStateOf("--") }
     var userLevel by remember { mutableStateOf("--") }
     var completedSessions by remember { mutableStateOf(0) }
+    var profilePictureUrl by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(refreshKey.value) {
         val userId = authViewModel.getCurrentUserUid()
         if (userId != null) {
             firestore.collection("Users").document(userId)
-                .addSnapshotListener { snapshot, error ->
-                    if (error != null) {
-                        checkCompleted = true
-                        return@addSnapshotListener
-                    }
-
-                    if (snapshot != null && snapshot.exists()) {
+                .get()
+                .addOnSuccessListener { snapshot ->
+                    if (snapshot.exists()) {
                         val firstTime = snapshot.getBoolean("isFirstTime") ?: true
                         isFirstTimeUser = firstTime
                         userName = snapshot.getString("name") ?: "--"
                         userLevel = snapshot.getString("level") ?: "--"
-                        checkCompleted = true
+                        profilePictureUrl = snapshot.getString("profilePictureUrl")
 
-                        // NEW: Automatically disable tutorial if user is not first time
                         if (!firstTime) {
                             showCoachOverlay = false
                         }
+
+                        firestore.collection("Progress")
+                            .whereEqualTo("uid", userId)
+                            .get()
+                            .addOnSuccessListener { progressSnapshot ->
+                                val completed = progressSnapshot.documents.count {
+                                    it.getBoolean("sessionCompleted") == true
+                                }
+                                completedSessions = completed
+                                checkCompleted = true
+                            }
+                            .addOnFailureListener {
+                                Log.e("HOME", "Failed to fetch sessions")
+                                checkCompleted = true
+                            }
+                    } else {
+                        checkCompleted = true
                     }
                 }
+                .addOnFailureListener {
+                    Log.e("HOME", "Failed to fetch user")
+                    checkCompleted = true
+                }
 
-            // Progress (unchanged)
-            val userRef = firestore.collection("Users").document(userId)
-            firestore.collection("Progress")
-                .whereEqualTo("uid", userRef)
+            // FireStore: Load training focus and week
+            val cal = Calendar.getInstance().apply { set(Calendar.DAY_OF_WEEK, Calendar.MONDAY) }
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val weekStart = sdf.format(cal.time)
+            val docId = "${userId}_$weekStart"
+
+            firestore.collection("TrainingPrograms").document(docId)
                 .get()
-                .addOnSuccessListener { querySnapshot ->
-                    completedSessions = querySnapshot.size()
+                .addOnSuccessListener { doc ->
+                    if (doc.exists()) {
+                        val storedWeekStart = doc.getString("weekStart") ?: weekStart
+                        trainingWeekLabel = try {
+                            val parsedDate = sdf.parse(storedWeekStart)
+                            val weekFormat = SimpleDateFormat("MMM d", Locale.getDefault())
+                            "Week of ${weekFormat.format(parsedDate!!)}"
+                        } catch (e: Exception) {
+                            "This Week"
+                        }
+
+                        val daysMap = doc.get("days") as? Map<*, *> ?: emptyMap<String, Any>()
+                        val allExercises = daysMap.values
+                            .filterIsInstance<List<*>>()
+                            .flatten()
+                            .mapNotNull { item ->
+                                (item as? Map<*, *>)?.get("name") as? String
+                            }
+
+                        trainingFocus = when {
+                            allExercises.any { it.contains("strength", ignoreCase = true) } -> "Strength & Endurance"
+                            allExercises.any { it.contains("core", ignoreCase = true) } -> "Core Training"
+                            allExercises.any { it.contains("endurance", ignoreCase = true) } -> "Endurance Focus"
+                            allExercises.any { it.contains("finger", ignoreCase = true) } -> "Grip & Fingers"
+                            else -> "Custom Focus"
+                        }
+
+                    } else {
+                        trainingWeekLabel = "No Plan"
+                        trainingFocus = "Not Available"
+                    }
                 }
                 .addOnFailureListener {
-                    checkCompleted = true
+                    trainingWeekLabel = "Error"
+                    trainingFocus = "Error"
                 }
         } else {
             checkCompleted = true
         }
     }
 
-
-
-    // launch after rocky finishes (either skip button or training)
-//    LaunchedEffect(checkCompleted, isFirstTimeUser) {
-//        if (checkCompleted && isFirstTimeUser) {
-//            delay(30000)
-//            navController.navigate("surveyIntroductionScreen") {
-//                popUpTo("homeScreen") { inclusive = false }
-//            }
-//        }
-//    }
-
-    // Scroll targets based on coach tips
     val scrollTargets = listOf(0, 0, 250, 620, 1000, 1400)
 
     LaunchedEffect(coachStep) {
@@ -144,17 +189,25 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
                 completedSessions = completedSessions,
                 onClick = { navController.navigate(Screen.UserDetailsScreen.route) },
                 dim = dim,
-                navController = navController
+                navController = navController,
+                profilePictureUrl = profilePictureUrl
             )
 
             Spacer(modifier = Modifier.height(20.dp))
             SurveySection(navController, dim = showCoachOverlay && coachStep != 2)
+
             TrainingProgramSection(
-                "Strength & Endurance",
-                navController,
+                currentTraining = trainingFocus,
+                navController = navController,
                 dim = showCoachOverlay && coachStep != 3
             )
-            ProgressDashboard("Week 1", navController, dim = showCoachOverlay && coachStep != 4)
+
+            ProgressDashboard(
+                currentProgress = trainingWeekLabel,
+                navController = navController,
+                dim = showCoachOverlay && coachStep != 4
+            )
+
             AchievementsSection(navController, dim = showCoachOverlay && coachStep != 5)
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -261,7 +314,7 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
 }
 
 @Composable
-fun ProfileCard(userName: String, level: String, completedSessions: Int, onClick: () -> Unit, dim: Boolean = false, navController: NavHostController) {
+fun ProfileCard(userName: String, level: String, completedSessions: Int, onClick: () -> Unit, dim: Boolean = false, navController: NavHostController, profilePictureUrl: String? = null) {
     val alpha = if (dim) 0.3f else 1f
     Card(
         modifier = Modifier
@@ -280,8 +333,9 @@ fun ProfileCard(userName: String, level: String, completedSessions: Int, onClick
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
-                    painter = painterResource(id = R.drawable.ic_profile_pic),
+                    painter = rememberAsyncImagePainter(model = profilePictureUrl ?: R.drawable.ic_profile_placeholder),
                     contentDescription = "Profile Picture",
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .size(80.dp)
                         .clip(RoundedCornerShape(50))
@@ -422,7 +476,7 @@ fun ProgressDashboard(currentProgress: String, navController: NavHostController,
             )
             Text(text = "Progress Dashboard", fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Current Focus: $currentProgress", fontSize = 16.sp, color = Color.Gray)
+            Text(text = "Progress For: $currentProgress", fontSize = 16.sp, color = Color.Gray)
             Spacer(modifier = Modifier.height(12.dp))
             Button(
                 onClick = { navController.navigate("ProgressDashboardScreen") },

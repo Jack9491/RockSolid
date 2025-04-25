@@ -25,8 +25,7 @@ fun TailoredSetupSection2(navController: NavController, surveyViewModel: SurveyV
             "Build power and strength",
             "Increase finger strength",
             "Enhance core strength and body tension",
-            "Injury prevention and recovery",
-            "General fitness and health"
+            "General fitness and health" // Removed unsupported option
         ),
         "Which style of climbing do you focus on most?" to listOf(
             "Bouldering",

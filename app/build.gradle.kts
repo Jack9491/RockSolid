@@ -70,6 +70,13 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore.ktx)
     implementation("io.coil-kt:coil-compose:2.3.0")
+    implementation("com.google.firebase:firebase-storage-ktx:20.3.0")
+
+    // Image loading
+    implementation("io.coil-kt:coil-compose:2.4.0")
+
+    // Image picker (camera/gallery)
+    implementation("com.github.Dhaval2404:imagepicker:2.1")
 
 
     implementation("com.google.android.gms:play-services-maps:18.1.0")
