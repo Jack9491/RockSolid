@@ -55,6 +55,7 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
     // state variables for real data
     var trainingFocus by remember { mutableStateOf("Loading...") }
     var trainingWeekLabel by remember { mutableStateOf("Loading...") }
+    var hasUnreadNotification by remember { mutableStateOf(false) }
 
     LaunchedEffect(savedStateHandle?.get<Boolean>("refreshHome")) {
         savedStateHandle?.remove<Boolean>("refreshHome")
@@ -77,7 +78,13 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
 
     LaunchedEffect(refreshKey.value) {
         val userId = authViewModel.getCurrentUserUid()
+        var achievementCheckInProgress = false
+
         if (userId != null) {
+            val notificationRef = firestore.collection("Notification")
+                .document(userId)
+                .collection("Items")
+
             firestore.collection("Users").document(userId)
                 .get()
                 .addOnSuccessListener { snapshot ->
@@ -99,6 +106,50 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
                                 val completed = progressSnapshot.size()
                                 completedSessions = completed
                                 checkCompleted = true
+
+                                // Check if an achievement should trigger a notification
+                                val unlockedAchievement = when (completed) {
+                                    1 -> "First Session Completed"
+                                    10 -> "10 Sessions Completed"
+                                    50 -> "50 Sessions Completed"
+                                    else -> null
+                                }
+
+                                if (unlockedAchievement != null && !achievementCheckInProgress) {
+                                    achievementCheckInProgress = true // Lock it
+
+                                    val query = notificationRef
+                                        .whereEqualTo("achievement_id", unlockedAchievement)
+
+                                    query.get().addOnSuccessListener { existing ->
+                                        if (existing.isEmpty) {
+                                            val notification = mapOf(
+                                                "title" to "New Achievement Unlocked",
+                                                "message" to "Well done! You've unlocked \"$unlockedAchievement\". Keep going to earn more!",
+                                                "sent_at" to com.google.firebase.Timestamp.now(),
+                                                "is_read" to false,
+                                                "achievement_id" to unlockedAchievement
+                                            )
+                                            notificationRef.add(notification)
+                                        }
+                                        achievementCheckInProgress = false // Optional unlock if needed
+                                    }.addOnFailureListener {
+                                        achievementCheckInProgress = false // Unlock on error too
+                                    }
+                                }
+
+
+
+                                // Check if there are unread notifications
+                                notificationRef
+                                    .whereEqualTo("is_read", false)
+                                    .get()
+                                    .addOnSuccessListener { snapshot ->
+                                        if (!snapshot.isEmpty) {
+                                            hasUnreadNotification = true
+                                            Toast.makeText(context, "You have a new notification!", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
                             }
                             .addOnFailureListener {
                                 Log.e("HOME", "Failed to fetch sessions")
@@ -113,7 +164,7 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
                     checkCompleted = true
                 }
 
-            // FireStore: Load training focus and week
+            // Load training focus and week
             val cal = Calendar.getInstance().apply { set(Calendar.DAY_OF_WEEK, Calendar.MONDAY) }
             val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
             val weekStart = sdf.format(cal.time)
@@ -162,6 +213,7 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
         }
     }
 
+
     val scrollTargets = listOf(0, 0, 250, 620, 1000, 1400)
 
     LaunchedEffect(coachStep) {
@@ -188,7 +240,8 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
                 onClick = { navController.navigate(Screen.UserDetailsScreen.route) },
                 dim = dim,
                 navController = navController,
-                profilePictureUrl = profilePictureUrl
+                profilePictureUrl = profilePictureUrl,
+                showNotificationDot = hasUnreadNotification
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -312,8 +365,7 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
 }
 
 @Composable
-fun ProfileCard(userName: String, level: String, completedSessions: Int, onClick: () -> Unit, dim: Boolean = false, navController: NavHostController, profilePictureUrl: String? = null
-) {
+fun ProfileCard(userName: String, level: String, completedSessions: Int, onClick: () -> Unit, dim: Boolean = false, navController: NavHostController, profilePictureUrl: String? = null, showNotificationDot: Boolean = false) {
     val alpha = if (dim) 0.3f else 1f
     Card(
         modifier = Modifier
@@ -403,6 +455,15 @@ fun ProfileCard(userName: String, level: String, completedSessions: Int, onClick
                     contentDescription = "Notifications",
                     tint = Color.White,
                     modifier = Modifier.size(40.dp)
+                )
+            }
+            if (showNotificationDot) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .background(Color.Red, shape = RoundedCornerShape(6.dp))
+                        .align(Alignment.TopEnd)
+                        .offset(x = (-2).dp, y = 2.dp)
                 )
             }
         }

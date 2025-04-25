@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import ie.tus.rocksolid.R
 import ie.tus.rocksolid.viewmodel.AuthViewModel
+import ie.tus.rocksolid.utils.ReminderManager // ✅ Import this
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,6 +35,8 @@ fun LoginScreen(
     val showResetDialog = remember { mutableStateOf(false) }
     val resetEmail = remember { mutableStateOf("") }
     val resetMessage = remember { mutableStateOf("") }
+
+    val context = LocalContext.current // ✅ Needed for reminder scheduling
 
     Column(
         modifier = Modifier
@@ -84,7 +88,11 @@ fun LoginScreen(
                 authViewModel.login(
                     email = email.value,
                     password = password.value,
-                    onSuccess = { onLoginSuccess() },
+                    onSuccess = {
+                        // ✅ Schedule daily workout reminder
+                        ReminderManager.scheduleDailyReminder(context)
+                        onLoginSuccess()
+                    },
                     onError = { error ->
                         isLoading.value = false
                         loginError.value = error

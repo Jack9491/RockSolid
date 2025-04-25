@@ -1,6 +1,8 @@
 package ie.tus.rocksolid.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -8,7 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,15 +19,58 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import coil.compose.rememberAsyncImagePainter
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.Timestamp
 import ie.tus.rocksolid.R
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.*
 
-data class NotificationItem(val title: String, val message: String, val time: String)
+data class NotificationItem(
+    val id: String,
+    val title: String,
+    val message: String,
+    val time: String,
+    var isRead: Boolean
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationScreen(navController: NavHostController) {
+    val firestore = FirebaseFirestore.getInstance()
+    val userId = FirebaseAuth.getInstance().currentUser?.uid
+    val coroutineScope = rememberCoroutineScope()
 
-    val notifications = emptyList<NotificationItem>() // Replace with dynamic list
+    var notifications by remember { mutableStateOf<List<NotificationItem>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        if (userId != null) {
+            val snapshot = firestore.collection("Notification")
+                .document(userId)
+                .collection("Items")
+                .orderBy("sent_at", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .get()
+                .await()
+
+            notifications = snapshot.documents.map { doc ->
+                val title = doc.getString("title") ?: "No Title"
+                val message = doc.getString("message") ?: "No Message"
+                val sentAt = doc.getTimestamp("sent_at") ?: Timestamp.now()
+                val isRead = doc.getBoolean("is_read") ?: false
+
+                NotificationItem(
+                    id = doc.id,
+                    title = title,
+                    message = message,
+                    time = formatTimestamp(sentAt),
+                    isRead = isRead
+                )
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -39,9 +84,7 @@ fun NotificationScreen(navController: NavHostController) {
             )
         }
     ) { innerPadding ->
-
         if (notifications.isEmpty()) {
-            // Empty state
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -51,7 +94,7 @@ fun NotificationScreen(navController: NavHostController) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.ic_notification), // reuse same icon
+                    painter = painterResource(id = R.drawable.ic_notification),
                     contentDescription = "No Notifications",
                     modifier = Modifier.size(100.dp)
                 )
@@ -69,14 +112,30 @@ fun NotificationScreen(navController: NavHostController) {
                 items(notifications) { notification ->
                     Card(
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
-                        modifier = Modifier.fillMaxWidth()
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (notification.isRead) Color(0xFFF5F5F5) else Color(0xFFFFF3E0)
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                coroutineScope.launch {
+                                    if (!notification.isRead && userId != null) {
+                                        firestore.collection("Notification")
+                                            .document(userId)
+                                            .collection("Items")
+                                            .document(notification.id)
+                                            .update("is_read", true)
+
+                                        notification.isRead = true
+                                    }
+                                }
+                            }
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
                                 text = notification.title,
                                 fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = if (notification.isRead) FontWeight.Normal else FontWeight.Bold
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(text = notification.message, fontSize = 16.sp)
@@ -92,4 +151,9 @@ fun NotificationScreen(navController: NavHostController) {
             }
         }
     }
+}
+
+fun formatTimestamp(timestamp: Timestamp): String {
+    val sdf = SimpleDateFormat("MMM d, yyyy h:mm a", Locale.getDefault())
+    return sdf.format(timestamp.toDate())
 }

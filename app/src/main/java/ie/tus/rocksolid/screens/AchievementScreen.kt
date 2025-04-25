@@ -5,7 +5,6 @@ import android.media.MediaPlayer
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -25,7 +24,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import ie.tus.rocksolid.R
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.tasks.await
+
+// Achievement data class
 
 data class Achievement(
     val imageRes: Int,
@@ -37,27 +42,77 @@ data class Achievement(
 
 @Composable
 fun AchievementScreen(navController: NavController, achievementIndex: Int) {
-    val achievements = listOf(
-        Achievement(R.drawable.achievement1, R.drawable.badge1, "First Session Completed!", 5, 10),
-        Achievement(R.drawable.achievement2, R.drawable.badge2, "10th Session Completed!", 1, 10),
-        Achievement(R.drawable.achievement3, R.drawable.badge3, "50th Session Completed!", 10, 50)
-    )
-
-    val validIndex = achievementIndex.coerceIn(0, achievements.lastIndex)
-    var showBadge by remember { mutableStateOf(true) }
     val context = LocalContext.current
+    val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+    val db = FirebaseFirestore.getInstance()
 
-    val achievement = achievements[validIndex]
-    val progress = achievement.currentSessions.toFloat() / achievement.nextGoal.toFloat()
-
+    var totalSessions by remember { mutableIntStateOf(0) }
+    var showBadge by remember { mutableStateOf(false) }
+    var currentMilestoneIndex by remember { mutableIntStateOf(-1) }
     var selectedAchievement by remember { mutableStateOf<Pair<Achievement, Boolean>?>(null) }
 
-    if (showBadge) {
-        LaunchedEffect(Unit) {
-            playAchievementSound(context)
+    val animatedSessions = remember { mutableIntStateOf(0) }
+    val animatedNextGoal = remember { mutableIntStateOf(1) }
+
+    // Fetch sessions from Firestore
+    LaunchedEffect(Unit) {
+        val progressDocs = db.collection("Progress")
+            .whereEqualTo("uid", uid)
+            .get()
+            .await()
+
+        totalSessions = progressDocs.size()
+
+        val milestoneIndex = when {
+            totalSessions >= 50 -> 2
+            totalSessions >= 10 -> 1
+            totalSessions >= 1 -> 0
+            else -> -1
         }
-        BadgeDialog(achievement.message) { showBadge = false }
-    } else {
+
+        if (milestoneIndex != -1) {
+            currentMilestoneIndex = milestoneIndex
+            if (totalSessions == listOf(1, 10, 50)[milestoneIndex]) {
+                showBadge = true
+                playAchievementSound(context)
+            }
+        }
+
+        // Animate progress bar forward
+        val currentGoal = listOf(1, 10, 50).getOrNull(milestoneIndex.coerceAtLeast(0)) ?: 1
+        val nextGoal = when {
+            totalSessions < 1 -> 1
+            totalSessions in 1..9 -> 10
+            totalSessions in 10..49 -> 50
+            else -> 50
+        }
+
+        animatedSessions.intValue = totalSessions
+        animatedNextGoal.intValue = currentGoal
+
+        if (totalSessions >= currentGoal && totalSessions < nextGoal) {
+            delay(1500L)
+            animatedNextGoal.intValue = nextGoal
+        }
+    }
+
+    val achievements = listOf(
+        Achievement(R.drawable.achievement1, R.drawable.badge1, "First Session Completed!", totalSessions, 1),
+        Achievement(R.drawable.achievement2, R.drawable.badge2, "10th Session Completed!", totalSessions, 10),
+        Achievement(R.drawable.achievement3, R.drawable.badge3, "50th Session Completed!", totalSessions, 50)
+    )
+
+    val validIndex = currentMilestoneIndex.coerceIn(0, achievements.lastIndex)
+    val achievement = achievements.getOrNull(validIndex)
+    val progress = animatedSessions.intValue.toFloat() / animatedNextGoal.intValue.toFloat()
+
+    if (showBadge && currentMilestoneIndex != -1 && totalSessions >= achievements[currentMilestoneIndex].nextGoal) {
+        BadgeDialog(achievements[currentMilestoneIndex].message) {
+            showBadge = false
+        }
+    }
+
+    if (achievement != null) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -89,7 +144,9 @@ fun AchievementScreen(navController: NavController, achievementIndex: Int) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Image(
-                        painter = painterResource(id = achievement.imageRes),
+                        painter = painterResource(
+                            id = if (totalSessions == 0) R.drawable.achievement0 else achievement.imageRes
+                        ),
                         contentDescription = "Achievement Image",
                         modifier = Modifier
                             .fillMaxWidth(0.9f)
@@ -99,7 +156,7 @@ fun AchievementScreen(navController: NavController, achievementIndex: Int) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     LinearProgressIndicator(
-                        progress = progress,
+                        progress = progress.coerceIn(0f, 1f),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(12.dp),
@@ -110,7 +167,7 @@ fun AchievementScreen(navController: NavController, achievementIndex: Int) {
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "${achievement.currentSessions} of ${achievement.nextGoal} sessions completed",
+                        text = "${animatedSessions.intValue} of ${animatedNextGoal.intValue} sessions completed",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -118,8 +175,10 @@ fun AchievementScreen(navController: NavController, achievementIndex: Int) {
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Image(
-                        painter = painterResource(id = achievement.badgeRes),
-                        contentDescription = "Badge Image",
+                        painter = painterResource(
+                            id = if (totalSessions == 0) R.drawable.badge0 else achievement.badgeRes
+                        ),
+                        contentDescription = "Badge Board",
                         modifier = Modifier
                             .fillMaxWidth(0.7f)
                             .height(150.dp)
@@ -141,7 +200,7 @@ fun AchievementScreen(navController: NavController, achievementIndex: Int) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 achievements.forEachIndexed { index, item ->
-                    val isUnlocked = index <= validIndex
+                    val isUnlocked = totalSessions >= item.nextGoal
                     val badgeRes = when (index) {
                         0 -> if (isUnlocked) R.drawable.single_unlocked_badge_1 else R.drawable.single_locked_badge_1
                         1 -> if (isUnlocked) R.drawable.single_unlocked_badge_2 else R.drawable.single_locked_badge_2
@@ -155,7 +214,7 @@ fun AchievementScreen(navController: NavController, achievementIndex: Int) {
                             .padding(vertical = 8.dp)
                             .clickable { selectedAchievement = item to isUnlocked },
                         colors = CardDefaults.cardColors(
-                            containerColor = if (index == validIndex) Color(0xFFFFF176) else Color.LightGray
+                            containerColor = if (isUnlocked) Color(0xFFFFF176) else Color.LightGray
                         ),
                         shape = RoundedCornerShape(12.dp),
                         elevation = CardDefaults.cardElevation(4.dp)
@@ -183,7 +242,6 @@ fun AchievementScreen(navController: NavController, achievementIndex: Int) {
                     }
                 }
             }
-
 
             selectedAchievement?.let { (ach, unlocked) ->
                 val badgeRes = when (achievements.indexOf(ach)) {
@@ -241,7 +299,7 @@ fun BadgeDialog(achievementText: String, onDismiss: () -> Unit) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "🏆",
+                        text = "\uD83C\uDFC6",
                         fontSize = 32.sp
                     )
                 }
