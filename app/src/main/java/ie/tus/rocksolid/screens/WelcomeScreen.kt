@@ -76,7 +76,9 @@ private fun WelcomeScreenContent(
             fontSize = 18.sp,
             fontWeight = FontWeight.Medium,
             color = Color.Black,
-            modifier = Modifier.padding(bottom = 32.dp)
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(bottom = 32.dp)
         )
 
         // Register Button

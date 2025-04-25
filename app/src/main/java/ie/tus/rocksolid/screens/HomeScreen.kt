@@ -96,9 +96,7 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
                             .whereEqualTo("uid", userId)
                             .get()
                             .addOnSuccessListener { progressSnapshot ->
-                                val completed = progressSnapshot.documents.count {
-                                    it.getBoolean("sessionCompleted") == true
-                                }
+                                val completed = progressSnapshot.size()
                                 completedSessions = completed
                                 checkCompleted = true
                             }
@@ -314,7 +312,8 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
 }
 
 @Composable
-fun ProfileCard(userName: String, level: String, completedSessions: Int, onClick: () -> Unit, dim: Boolean = false, navController: NavHostController, profilePictureUrl: String? = null) {
+fun ProfileCard(userName: String, level: String, completedSessions: Int, onClick: () -> Unit, dim: Boolean = false, navController: NavHostController, profilePictureUrl: String? = null
+) {
     val alpha = if (dim) 0.3f else 1f
     Card(
         modifier = Modifier
@@ -326,59 +325,84 @@ fun ProfileCard(userName: String, level: String, completedSessions: Int, onClick
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFD32F2F))
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Profile Picture
                 Image(
                     painter = rememberAsyncImagePainter(model = profilePictureUrl ?: R.drawable.ic_profile_placeholder),
                     contentDescription = "Profile Picture",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(80.dp)
+                        .size(60.dp)
                         .clip(RoundedCornerShape(50))
                 )
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text(text = userName, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_level),
-                            contentDescription = "Level Icon",
-                            modifier = Modifier.size(18.dp),
-                            tint = Color.Black
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(text = "Level: $level", fontSize = 16.sp, color = Color.White)
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_routes),
-                            contentDescription = "Routes Icon",
-                            modifier = Modifier.size(18.dp),
-                            tint = Color.Black
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                // Text Column
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 4.dp)
+                    ) {
                         Text(
-                            text = "Sessions Completed: $completedSessions",
-                            fontSize = 14.sp,
-                            color = Color.White
+                            text = userName,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black
                         )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Column(modifier = Modifier.padding(start = 4.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_level),
+                                contentDescription = "Level Icon",
+                                modifier = Modifier.size(18.dp),
+                                tint = Color.Black
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(text = "Level: ", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                            Text(text = level, fontSize = 16.sp, color = Color.White)
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_routes),
+                                contentDescription = "Routes Icon",
+                                modifier = Modifier.size(18.dp),
+                                tint = Color.Black
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(text = "Sessions Completed: ", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                            Text(text = "$completedSessions", fontSize = 14.sp, color = Color.White)
+                        }
                     }
                 }
             }
+
+            // Notification Icon
             IconButton(
-                onClick = { navController.navigate(Screen.NotificationScreen.route) }
+                onClick = { navController.navigate(Screen.NotificationScreen.route) },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 2.dp, end = 2.dp)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_notification),
                     contentDescription = "Notifications",
                     tint = Color.White,
-                    modifier = Modifier.size(60.dp)
+                    modifier = Modifier.size(40.dp)
                 )
             }
         }

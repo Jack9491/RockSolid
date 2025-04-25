@@ -207,17 +207,16 @@ fun TrainingProgramScreen(navController: NavHostController) {
                                 }
                             }
 
-                            Button(
-                                onClick = {
-                                    IntermediateAdvancedTutorialInjector.inject()
-                                    Toast.makeText(context, "Intermediate & Advanced Tutorials injected!", Toast.LENGTH_SHORT).show()
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)), // Blue
-                                modifier = Modifier.padding(top = 16.dp).align(Alignment.CenterHorizontally)
-                            ) {
-                                Text("Inject Intermediate & Advanced Tutorials", color = Color.White)
-                            }
-
+//                            Button(
+//                                onClick = {
+//                                    IntermediateAdvancedTutorialInjector.inject()
+//                                    Toast.makeText(context, "Intermediate & Advanced Tutorials injected!", Toast.LENGTH_SHORT).show()
+//                                },
+//                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)), // Blue
+//                                modifier = Modifier.padding(top = 16.dp).align(Alignment.CenterHorizontally)
+//                            ) {
+//                                Text("Inject Intermediate & Advanced Tutorials", color = Color.White)
+//                            }
 
 
                             LaunchedEffect(selectedDay.value, isToday, isCompleted, isInPast, isInFuture) {

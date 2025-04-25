@@ -92,4 +92,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    // Imgbb
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
 }
