@@ -1,6 +1,5 @@
 package ie.tus.rocksolid.screens
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,7 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -21,7 +19,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import ie.tus.rocksolid.R
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.*
@@ -276,9 +273,33 @@ fun GoalProgressCard(goalGrade: String, progressSessions: Int, targetSessions: I
     }
 }
 
+
+/*
+Part of the code in this screen (specifically related to setting up and displaying charts)
+is adapted from the MPAndroidChart library by PhilJay (https://github.com/PhilJay/MPAndroidChart).
+
+I have modified and integrated the code into my own composables to suit the needs of my project.
+
+This code is used under the terms of the Apache License, Version 2.0.
+
+Copyright [2025] [PhilJay]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 @Composable
 fun ChartPlaceholder() {
-    val context = LocalContext.current
+    LocalContext.current
     var showFullScreen by remember { mutableStateOf(false) }
     val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
@@ -393,58 +414,6 @@ fun FullScreenChartSessions(sessionsOverTime: List<Date>, onClose: () -> Unit) {
                     }
 
                     val dataSet = com.github.mikephil.charting.data.LineDataSet(entries, "Sessions Over Time").apply {
-                        color = android.graphics.Color.parseColor("#D32F2F")
-                        valueTextColor = android.graphics.Color.BLACK
-                        lineWidth = 3f
-                        setDrawCircles(false)
-                        setDrawFilled(true)
-                        mode = com.github.mikephil.charting.data.LineDataSet.Mode.CUBIC_BEZIER
-                        fillColor = android.graphics.Color.parseColor("#D32F2F")
-                        fillAlpha = 120
-                    }
-
-                    val lineData = com.github.mikephil.charting.data.LineData(dataSet)
-                    chart.data = lineData
-                    chart.invalidate()
-                }
-            )
-        }
-    }
-}
-
-
-@Composable
-fun FullScreenChart(sessionCounts: List<Pair<String, Int>>, onClose: () -> Unit) {
-    Dialog(onDismissRequest = onClose) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .padding(16.dp)
-        ) {
-            AndroidView(
-                modifier = Modifier
-                    .fillMaxSize(),
-                factory = { context ->
-                    com.github.mikephil.charting.charts.LineChart(context).apply {
-                        layoutParams = android.view.ViewGroup.LayoutParams(
-                            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                            android.view.ViewGroup.LayoutParams.MATCH_PARENT
-                        )
-                        setTouchEnabled(true)
-                        setPinchZoom(true)
-                        description.isEnabled = false
-                        setDrawGridBackground(false)
-                    }
-                },
-                update = { chart ->
-                    val entries = mutableListOf<com.github.mikephil.charting.data.Entry>()
-
-                    sessionCounts.forEachIndexed { index, pair ->
-                        entries.add(com.github.mikephil.charting.data.Entry(index.toFloat(), pair.second.toFloat()))
-                    }
-
-                    val dataSet = com.github.mikephil.charting.data.LineDataSet(entries, "Sessions per Week").apply {
                         color = android.graphics.Color.parseColor("#D32F2F")
                         valueTextColor = android.graphics.Color.BLACK
                         lineWidth = 3f
