@@ -57,47 +57,69 @@ fun RegisterScreen(
             value = name.value,
             onValueChange = { name.value = it },
             label = { Text("Name") },
-            textStyle = TextStyle(color = Color.Black),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            textStyle = LocalTextStyle.current.copy(color = Color.Black),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedBorderColor = Color(0xFFD32F2F),
+                focusedLabelColor = Color(0xFFD32F2F),
+                cursorColor = Color(0xFFD32F2F)
+            )
         )
 
         OutlinedTextField(
             value = email.value,
             onValueChange = { email.value = it },
             label = { Text("Email Address") },
-            textStyle = TextStyle(color = Color.Black),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            textStyle = LocalTextStyle.current.copy(color = Color.Black),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedBorderColor = Color(0xFFD32F2F),
+                focusedLabelColor = Color(0xFFD32F2F),
+                cursorColor = Color(0xFFD32F2F)
+            )
         )
 
         OutlinedTextField(
             value = password.value,
             onValueChange = { password.value = it },
             label = { Text("Password") },
-            textStyle = TextStyle(color = Color.Black),
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            textStyle = LocalTextStyle.current.copy(color = Color.Black),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedBorderColor = Color(0xFFD32F2F),
+                focusedLabelColor = Color(0xFFD32F2F),
+                cursorColor = Color(0xFFD32F2F)
+            )
         )
 
         OutlinedTextField(
             value = confirmPassword.value,
             onValueChange = { confirmPassword.value = it },
             label = { Text("Confirm Password") },
-            textStyle = TextStyle(color = Color.Black),
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 8.dp),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            textStyle = LocalTextStyle.current.copy(color = Color.Black),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedBorderColor = Color(0xFFD32F2F),
+                focusedLabelColor = Color(0xFFD32F2F),
+                cursorColor = Color(0xFFD32F2F)
+            )
         )
+
+
 
         val passwordCriteria = PasswordValidator.getValidationState(password.value)
         Column(modifier = Modifier.fillMaxWidth()) {

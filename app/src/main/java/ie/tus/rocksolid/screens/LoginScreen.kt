@@ -36,7 +36,7 @@ fun LoginScreen(
     val resetEmail = remember { mutableStateOf("") }
     val resetMessage = remember { mutableStateOf("") }
 
-    val context = LocalContext.current // ✅ Needed for reminder scheduling
+    val context = LocalContext.current // Needed for reminder scheduling
 
     Column(
         modifier = Modifier
@@ -61,7 +61,13 @@ fun LoginScreen(
             onValueChange = { email.value = it },
             label = { Text("Email Address") },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(8.dp),
+            textStyle = LocalTextStyle.current.copy(color = Color.Black),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedBorderColor = Color(0xFFD32F2F),
+                focusedLabelColor = Color(0xFFD32F2F),
+                cursorColor = Color(0xFFD32F2F)
+            )
         )
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -72,8 +78,17 @@ fun LoginScreen(
             label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(8.dp)
+            shape = RoundedCornerShape(8.dp),
+            textStyle = LocalTextStyle.current.copy(color = Color.Black),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedBorderColor = Color(0xFFD32F2F),
+                focusedLabelColor = Color(0xFFD32F2F),
+                cursorColor = Color(0xFFD32F2F)
+            )
         )
+
+
+
 
         if (loginError.value.isNotBlank()) {
             Text(text = loginError.value, color = Color.Red, modifier = Modifier.padding(8.dp))
