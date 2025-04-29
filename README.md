@@ -2,6 +2,90 @@
 
 ---
 
+RockSolid is a personal fitness and climbing assistant app designed to guide users through customised training plans, track achievements, and improve performance. The app offers a coach-led tutorial system, training progression tracking, achievements, notifications, and more—all built with a friendly and motivating user experience.
+
+## Features
+
+- **Personalised Training Plans**
+  - Weekly plans generated based on user experience and performance.
+  - Daily training routines including warmups, exercises, and cooldowns.
+
+- **Coach Rocky Assistant**
+  - Friendly guide that appears contextually (on first use, training start, new achievements, etc.).
+  - Delivers information and encouragement using interactive dialogs.
+
+- **Progress Tracking**
+  - Visual progress bars showing completion rates of exercises and sessions.
+  - Linear progress indicators and achievement milestones.
+
+- **Achievements and Badges**
+  - Unlockable badges for completing training milestones (1, 10, 50 sessions).
+  - Achievement animations and celebratory dialogs.
+
+- **Notification System**
+  - Real-time feedback for new achievements and unread alerts.
+  - Visual badge indicators on the home screen.
+
+- **Surveys and Personalisation**
+  - Onboarding surveys for tailoring the program to the user's level and goals.
+
+- **Tutorial Integration**
+  - Informational tooltips and dialogs triggered per exercise or screen section.
+  - Hardcoded and dynamic tutorial content.
+
+## Technologies Used
+
+- **Kotlin** & **Jetpack Compose** – Modern Android UI toolkit.
+- **Firebase Firestore** – Real-time database for user data and training plans.
+- **Firebase Authentication** – Secure user login management.
+- **MediaPlayer** – Audio feedback on achievement unlocks.
+- **Coroutines** – Asynchronous loading of user data and remote resources.
+
+## Screens & UX
+
+- **Home Screen**
+  - Displays training focus, current stats, profile picture, and survey status.
+
+- **Training Program Screen**
+  - Calendar view for selecting training days.
+  - Exercise previews and day-specific details.
+
+- **Exercise Screen**
+  - Interactive interface for completing and tracking exercise sets.
+  - Confirmation dialogs and partial progress tracking.
+
+- **Achievements Screen**
+  - Visual reward board, achievement dialog system, and badges.
+  - Celebration dialogs for milestone completions.
+
+## Installation
+
+1. Clone the repository or unzip the provided project.
+2. Open in **Android Studio IDE**.
+3. Ensure the Firebase project is connected with the correct `google-services.json`.
+4. Sync Gradle and run on an Android device or emulator.
+
+## Customisation Notes
+
+- All training plans are generated based on the user's onboarding flow.
+- Tutorial content and coach dialogs are handled with composable overlay logic.
+- Notifications and progress are stored in Firestore under respective collections (`Notification`, `Progress`, `Users`).
+
+## Folder Structure Overview
+
+- `screens/` – Contains all Composable screens (Home, Exercise, Training, etc.).
+- `navigation/` – Route declarations and NavHost control.
+- `viewmodel/` – ViewModel for authentication state.
+- `modelScripts/` – Logic for generating training plans and injecting tutorials.
+- `res/` – Drawable assets including Coach Rocky images and badges.
+
+## License
+
+This project is intended for educational and personal development purposes only. Commercial use is not permitted without explicit permission.
+
+
+---
+
 # Commit 1
 1. Project Structure Setup
 2. Screens set up
@@ -91,3 +175,16 @@
 1. Training Programs are now generated based on user survey selections
 2. Exercise screen added as a workout area
 3. UX enhancements needed
+
+---
+
+# Commit 14-22:
+1. All App functionality is working 
+- surveys
+- training programs
+- progress tracking 
+- achievements
+- notifications 
+- forget password emails
+2. Coach Rocky the app mascot was added to all screens for user interaction, better UX, and gamification
+3. App is complete
