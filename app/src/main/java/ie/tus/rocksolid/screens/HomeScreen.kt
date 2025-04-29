@@ -26,11 +26,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.QuerySnapshot
 import ie.tus.rocksolid.R
 import ie.tus.rocksolid.navigation.Screen
 import ie.tus.rocksolid.viewmodel.AuthViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -75,6 +73,7 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
     var userLevel by remember { mutableStateOf("--") }
     var completedSessions by remember { mutableStateOf(0) }
     var profilePictureUrl by remember { mutableStateOf<String?>(null) }
+    var showNotificationDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(refreshKey.value) {
         val userId = authViewModel.getCurrentUserUid()
@@ -147,7 +146,7 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
                                     .addOnSuccessListener { snapshot ->
                                         if (!snapshot.isEmpty) {
                                             hasUnreadNotification = true
-                                            Toast.makeText(context, "You have a new notification!", Toast.LENGTH_SHORT).show()
+                                            showNotificationDialog = true
                                         }
                                     }
                             }
@@ -354,6 +353,71 @@ fun HomeScreen(navController: NavHostController, authViewModel: AuthViewModel) {
                                         if (coachStep == coachTips.lastIndex) "Start Training" else "Next Tip",
                                         color = Color.White
                                     )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (showNotificationDialog) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0x80000000)) // semi-transparent dark backdrop
+                    .clickable(enabled = false) {} // absorb clicks
+            ) {
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(horizontal = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Coach Rocky image on top, fully visible
+                    Image(
+                        painter = painterResource(id = R.drawable.coach_notification),
+                        contentDescription = "Coach Rocky",
+                        modifier = Modifier.size(180.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Message Card
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                "New Notification",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 20.sp
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                "You have a new notification. Go to the Notifications screen to check it out!",
+                                fontSize = 16.sp
+                            )
+                            Spacer(modifier = Modifier.height(20.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                TextButton(onClick = { showNotificationDialog = false }) {
+                                    Text("Dismiss")
+                                }
+                                Button(
+                                    onClick = {
+                                        showNotificationDialog = false
+                                        navController.navigate(Screen.NotificationScreen.route)
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
+                                ) {
+                                    Text("Go Now", color = Color.White)
                                 }
                             }
                         }

@@ -34,7 +34,6 @@ fun BuildNavigationGraph(
             RegisterScreen(navController, authViewModel, onRegisterSuccess = {
                 Log.d("Navigation", "Navigating to LoginScreen after successful registration")
                 navController.navigate(Screen.LoginScreen.route) {
-                    //popUpTo(Screen.RegisterScreen.route) { inclusive = true }
                 }
             })
         }

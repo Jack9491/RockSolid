@@ -1,6 +1,5 @@
 package ie.tus.rocksolid.screens
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,7 +17,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import ie.tus.rocksolid.R
 import ie.tus.rocksolid.viewmodel.AuthViewModel
-import ie.tus.rocksolid.utils.ReminderManager // ✅ Import this
+import ie.tus.rocksolid.utils.ReminderManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -104,7 +103,7 @@ fun LoginScreen(
                     email = email.value,
                     password = password.value,
                     onSuccess = {
-                        // ✅ Schedule daily workout reminder
+                        // Schedule daily workout reminder
                         ReminderManager.scheduleDailyReminder(context)
                         onLoginSuccess()
                     },

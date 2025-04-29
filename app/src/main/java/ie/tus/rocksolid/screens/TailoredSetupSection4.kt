@@ -13,7 +13,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import ie.tus.rocksolid.viewmodel.SurveyViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TailoredSetupSection4(navController: NavController, surveyViewModel: SurveyViewModel) {
     var questionIndex by remember { mutableStateOf(0) }

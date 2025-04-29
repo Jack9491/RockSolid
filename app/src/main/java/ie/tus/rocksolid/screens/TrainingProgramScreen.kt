@@ -132,9 +132,10 @@ fun TrainingProgramScreen(navController: NavHostController) {
                                             }
                                         }
                                     }
-                                }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
                             ) {
-                                Text("Generate Training Plan")
+                                Text("Generate Training Plan", color = Color.White)
                             }
                         }
 

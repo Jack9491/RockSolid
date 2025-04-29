@@ -1,6 +1,5 @@
 package ie.tus.rocksolid.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -14,7 +13,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import ie.tus.rocksolid.navigation.Screen
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SurveyIntroductionScreen(navController: NavController) {
     Scaffold { innerPadding ->

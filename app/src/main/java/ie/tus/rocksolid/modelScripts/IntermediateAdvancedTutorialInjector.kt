@@ -2,9 +2,6 @@ package ie.tus.rocksolid.modelScripts
 
 import android.util.Log
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 object IntermediateAdvancedTutorialInjector {
 

@@ -96,7 +96,7 @@ object TrainingPlanGenerator {
                 return
             }
 
-            // 🧠 Create weekly plan
+            // Create weekly plan
             val days = mutableMapOf<String, List<Map<String, Any>>>()
             val dayKeys = listOf("monday", "tuesday", "wednesday", "thursday", "friday")
 

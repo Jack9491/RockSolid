@@ -53,6 +53,7 @@ fun AchievementScreen(navController: NavController, achievementIndex: Int) {
 
     val animatedSessions = remember { mutableIntStateOf(0) }
     val animatedNextGoal = remember { mutableIntStateOf(1) }
+    var showAchievementRockyDialog by remember { mutableStateOf(false) }
 
     // Fetch sessions from Firestore
     LaunchedEffect(Unit) {
@@ -75,6 +76,16 @@ fun AchievementScreen(navController: NavController, achievementIndex: Int) {
             if (totalSessions == listOf(1, 10, 50)[milestoneIndex]) {
                 showBadge = true
                 playAchievementSound(context)
+            }
+        }
+
+        if (milestoneIndex != -1) {
+            currentMilestoneIndex = milestoneIndex
+            if (totalSessions == listOf(1, 10, 50)[milestoneIndex]) {
+                showBadge = true
+                playAchievementSound(context)
+                delay(3000L) // Wait before showing Rocky popup
+                showAchievementRockyDialog = true
             }
         }
 
@@ -271,6 +282,54 @@ fun AchievementScreen(navController: NavController, achievementIndex: Int) {
                     message = dialogMessage,
                     onDismiss = { selectedAchievement = null }
                 )
+            }
+        }
+    }
+    if (showAchievementRockyDialog) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0x80000000))
+                .clickable(enabled = false) {}
+        ) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(horizontal = 32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.coach_wooo),
+                    contentDescription = "Coach Rocky Excited",
+                    modifier = Modifier.size(200.dp)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            "WOOOO NEW ACHIEVEMENT UNLOCKED",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Button(
+                            onClick = { showAchievementRockyDialog = false },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
+                        ) {
+                            Text("Nice!", color = Color.White)
+                        }
+                    }
+                }
             }
         }
     }

@@ -1,6 +1,8 @@
 package ie.tus.rocksolid.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -23,9 +26,10 @@ import androidx.navigation.NavHostController
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import ie.tus.rocksolid.R
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.util.*
+
 
 @Composable
 fun ExerciseScreen(day: String, weekStart: String, navController: NavHostController) {
@@ -42,6 +46,7 @@ fun ExerciseScreen(day: String, weekStart: String, navController: NavHostControl
 
     var alreadyCompleted by remember { mutableStateOf<Boolean?>(null) }
     var showTutorialDialog by remember { mutableStateOf<String?>(null) }
+    var showStartTrainingDialog by remember { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         val progressCheck = db.collection("Progress")
@@ -104,6 +109,57 @@ fun ExerciseScreen(day: String, weekStart: String, navController: NavHostControl
             Column(Modifier.fillMaxSize().padding(16.dp)) {
                 Text("Training: ${day.replaceFirstChar { it.uppercase() }}", fontSize = 24.sp)
                 Spacer(modifier = Modifier.height(16.dp))
+
+                if (showStartTrainingDialog) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0x80000000))
+                            .clickable(enabled = false) {} // absorbs outside clicks
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .align(Alignment.Center)
+                                .padding(horizontal = 32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            // Coach image (whistle version)
+                            Image(
+                                painter = painterResource(id = R.drawable.coach_whistle),
+                                contentDescription = "Coach Rocky Whistle",
+                                modifier = Modifier.size(180.dp)
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Card(
+                                shape = RoundedCornerShape(20.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color.White),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(24.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        "Ready to train? 3...2...1.. Go Go Go",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(20.dp))
+                                    Button(
+                                        onClick = { showStartTrainingDialog = false },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
+                                    ) {
+                                        Text("Start Training", color = Color.White)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
 
                 Column(
                     modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
@@ -286,7 +342,13 @@ fun ExerciseCard(
                             containerColor = if (isSelected) Color(0xFFD32F2F) else Color.LightGray
                         )
                     ) {
-                        Text(label, fontSize = 13.sp, color = Color.White)
+                        Text(
+                            text = label,
+                            fontSize = 12.sp,
+                            color = Color.White,
+                            maxLines = 1,
+                            softWrap = false
+                        )
                     }
                 }
             }
